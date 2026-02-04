@@ -84,15 +84,6 @@ def require_auth(f):
 
     return wrapper
 '''
-def get_connection():
-    return mysql.connector.connect(
-    #host='192.168.1.5',
-    host='10.10.10.5',
-    user='caio',
-    password='Ca$io2024',
-    database='sislote'
-)
-
 
 @app.route('/vendas')
 #@require_auth
@@ -118,9 +109,46 @@ def bloqueado():
 @app.route('/atualizar', methods=['POST'])
 #@require_auth
 def atualizar_kanban():
+    data = request.get_json(force=True)
 
-    atualizar_kanban()
-    return jsonify({"message": "Etapa atualizada com sucesso"}), 200
+    etapa = data.get("etapa")
+    usuario = data.get("usuario")
+    id_lote = data.get("id_lote")
+    limpar_frente = bool(data.get("limpar_frente"))
+
+    ordem_etapas = ['contrato-gerado', 'entrada-paga', 'aguardando-retirada', 'entregue']
+
+    if not isinstance(etapa, str) or etapa not in etapas:
+        return jsonify({"error": f"Etapa inválida: {etapa}"}), 400
+
+    if not usuario or not id_lote:
+        return jsonify({"error": "usuario e id_lote são obrigatórios"}), 400
+
+    col_user_dest, col_data_dest = etapas[etapa]
+
+    # monta SET dinâmico
+    set_parts = [f"{col_user_dest} = %s", f"{col_data_dest} = NOW()"]
+    params = [usuario]
+
+    if limpar_frente:
+        try:
+            idx_dest = ordem_etapas.index(etapa)
+        except ValueError:
+            return jsonify({"error": "Etapa não está na ordem canônica"}), 400
+
+        etapas_a_frente = ordem_etapas[idx_dest+1:]
+        for et in etapas_a_frente:
+            if et in etapas:
+                col_u, col_d = etapas[et]
+                set_parts.append(f"{col_u} = NULL")
+                set_parts.append(f"{col_d} = NULL")
+
+    query = f"UPDATE lot_controle_contrato SET {', '.join(set_parts)} WHERE id = %s"
+    params.append(id_lote)
+
+    linhas = executar_query(query, tuple(params))
+
+    return linhas > 0
 
 @app.route('/badges')
 #@require_auth
@@ -132,9 +160,10 @@ def get_badges():
 @app.route('/entregues/finalizados')
 #@require_auth
 def contratos_finalizados():
+    '''
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
-    
+    '''
     query = '''
         SELECT 
             lcc.id, 
@@ -192,12 +221,12 @@ def contratos_finalizados():
             ON lcc.USER_ETQ_RETIRADA = autenticado.login
         where lcc.DATA_ENTREGUE is not null 
         '''
-    
+    '''
     cursor.execute(query)
     results = cursor.fetchall()
-    return jsonify(results)
+    return jsonify(results)'''
 
-@app.route('/consulta', methods=['GET'])
+@app.route('/consulta', methods=['POST'])
 #@require_auth
 def consulta_contrato():
     data = request.get_json(force=True) or {}
@@ -253,6 +282,7 @@ def criar_contrato_especial():
     if not all([tipo, id_lote, codcli, usuario]):
         return jsonify({"error": "Dados incompletos"}), 400
 
+    '''
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -266,7 +296,7 @@ def criar_contrato_especial():
     cursor.close()
     conn.close()
 
-    return jsonify({"message": "Contrato especial criado com sucesso"}), 201
+    return jsonify({"message": "Contrato especial criado com sucesso"}), 201'''
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5010)

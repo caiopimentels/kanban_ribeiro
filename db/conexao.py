@@ -27,11 +27,9 @@ def executar_query(query, params=None):
     try:
             is_select = query.strip().lower().startswith("select")
 
-            # sem params
             if params is None:
                 cursor.execute(query)
             else:
-                # params em lote => executemany
                 is_many = isinstance(params, (list, tuple)) and len(params) > 0 and isinstance(params[0], (list, tuple))
                 if is_many:
                     cursor.executemany(query, params)
