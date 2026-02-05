@@ -108,10 +108,9 @@ def limpar_nova_venda():
     '''
     executar_query(limpar)
 
-def atualizar_vendas():
-    query = '''
-        SELECT 
-            c.razao, 
+def query_base():
+    selecao  = (
+        '''c.razao, 
             c.rca,
             lv2.nome AS nome_usuario,
             autenticado.nome AS nome_autenticado,
@@ -122,18 +121,13 @@ def atualizar_vendas():
             fisico.nome AS nome_fisico,
             digital.nome AS nome_digital,
             impresso.nome AS nome_impresso,
-            c.dtcadastro,
-            ll.quadra, 
-            ll.lote, 
-            ll.parte, 
-            lv.nome AS nome_vendedor, 
             le.fantasia,
-            case when c2.parcela = 0 then c2.valorpago else 0 end as entrada,
-            lcc.*
-        FROM lot_lotes ll
-        LEFT JOIN contasareceber c2
-        	ON c2.numped = ll.id 
-        JOIN cadcli c 
+            lv.nome AS nome_vendedor, 
+            c.dtcadastro,
+            lcc.*,''')
+    
+    colunas = (
+    ''' JOIN cadcli c 
             ON ll.CODCLI = c.CODCLI
         JOIN lot_empreendimento le  
             ON ll.ID_EMPREENDIMENTO = le.ID
@@ -158,7 +152,24 @@ def atualizar_vendas():
         LEFT JOIN lot_vendedores impresso 
             ON lcc.USER_IMPRESSO = impresso.login
         LEFT JOIN lot_vendedores autenticado 
-            ON lcc.USER_ETQ_RETIRADA = autenticado.login
+            ON lcc.USER_ETQ_RETIRADA = autenticado.login''')
+
+    return selecao, colunas
+
+
+def atualizar_vendas():
+    selecao, colunas = query_base()
+    query = f'''
+        SELECT 
+            {selecao}
+            ll.quadra, 
+            ll.lote, 
+            ll.parte, 
+            case when c2.parcela = 0 then c2.valorpago else 0 end as entrada
+        FROM lot_lotes ll
+        LEFT JOIN contasareceber c2
+        	ON c2.numped = ll.id 
+        {colunas}
         WHERE ( 
             lcc.data_entregue IS null and not
             (ll.codcli = 15 AND ll.codvendedor = 4) and not ll.codcli = 15 and not ll.situacao <> 'V'
@@ -175,7 +186,6 @@ def atualizar_vendas():
             )
         GROUP BY c.CODCLI, ll.id
         ORDER BY ll.DATA_COMPRA ASC '''
-    
     resultado = executar_query(query)
     return resultado
 
@@ -282,11 +292,25 @@ def consultar_lote(id_lote):
     return row
 
 def observacao(obs, id_kanban):
-    query = """
+    query = '''
         UPDATE lot_controle_contrato lcc
             SET OBS = %s
             WHERE id = %s
-    """
+    '''
     linhas = executar_query(query, (obs, id_kanban))
 
     return linhas > 0
+
+def atualizar_coluna(set_parts, params, id_lote):
+    query = f'''
+        UPDATE lot_controle_contrato lcc
+            SET {', '.join(set_parts)}
+            WHERE id = %s
+    '''
+
+    params.append(id_lote)
+    linha = executar_query(query, tuple(params))
+
+    return linha > 0
+
+print(atualizar_vendas())

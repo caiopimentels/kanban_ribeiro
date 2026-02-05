@@ -114,8 +114,7 @@ def atualizar_kanban():
     etapa = data.get("etapa")
     usuario = data.get("usuario")
     id_lote = data.get("id_lote")
-    limpar_frente = bool(data.get("limpar_frente"))
-
+    
     ordem_etapas = ['contrato-gerado', 'entrada-paga', 'aguardando-retirada', 'entregue']
 
     if not isinstance(etapa, str) or etapa not in etapas:
@@ -126,29 +125,12 @@ def atualizar_kanban():
 
     col_user_dest, col_data_dest = etapas[etapa]
 
-    # monta SET dinâmico
     set_parts = [f"{col_user_dest} = %s", f"{col_data_dest} = NOW()"]
     params = [usuario]
 
-    if limpar_frente:
-        try:
-            idx_dest = ordem_etapas.index(etapa)
-        except ValueError:
-            return jsonify({"error": "Etapa não está na ordem canônica"}), 400
+    resultado = atualizar_coluna(set_parts, params, id_lote)
 
-        etapas_a_frente = ordem_etapas[idx_dest+1:]
-        for et in etapas_a_frente:
-            if et in etapas:
-                col_u, col_d = etapas[et]
-                set_parts.append(f"{col_u} = NULL")
-                set_parts.append(f"{col_d} = NULL")
-
-    query = f"UPDATE lot_controle_contrato SET {', '.join(set_parts)} WHERE id = %s"
-    params.append(id_lote)
-
-    linhas = executar_query(query, tuple(params))
-
-    return linhas > 0
+    return resultado > 0
 
 @app.route('/badges')
 #@require_auth
@@ -166,7 +148,6 @@ def contratos_finalizados():
     '''
     query = '''
         SELECT 
-            lcc.id, 
             ll.codcli, 
             c.razao, 
             c.rca,
