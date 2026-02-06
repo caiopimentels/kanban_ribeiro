@@ -166,5 +166,14 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
               </div>
 
             </div>
-          </form>`;
+          </form>
+          <div class="modal-status">
+            <div class="badge Autenticado"><span>Autenticado</span></div>
+            <div class="badge Pagamento-OK"><span>Pagamento OK</span></div>
+            <div class="badge Carne-Gerado"><span>Carnê Gerado</span></div>
+            <div class="badge Digitalizado"><span>Digitalizado</span></div>
+            <div class="badge Fisico"><span>Fisico</span></div>
+            <div class="badge Digital"><span>Digital</span></div>
+            <div class="badge Impresso"><span>Impresso</span></div>
+          </div>`;
 }
