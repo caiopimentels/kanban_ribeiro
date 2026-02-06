@@ -16,7 +16,7 @@ etapas = {
 
 def atualizar_carne():
     boleto = atualizar_vendas()
-    clientes = [(row['codcli'], row['ID_LOTE']) for row in boleto]
+    clientes = [(row['cliente'].split()[0], row['id_lote']) for row in boleto]
 
     if not clientes:
         return 0
@@ -110,7 +110,8 @@ def limpar_nova_venda():
 
 def query_base():
     selecao  = (
-        '''c.razao, 
+        ''' concat(c.codcli, " - ", c.razao) as cliente,
+            c.codcli, 
             c.rca,
             lv2.nome AS nome_usuario,
             autenticado.nome AS nome_autenticado,
@@ -133,8 +134,6 @@ def query_base():
             ON ll.ID_EMPREENDIMENTO = le.ID
         JOIN lot_vendedores lv2 
             ON c.rca = lv2.login 
-        JOIN lot_controle_contrato lcc  
-            ON ll.ID = lcc.ID_lote 
         JOIN lot_vendedores lv 
             ON lcc.codvendedor = lv.login 
         LEFT JOIN lot_vendedores entregue 
@@ -162,13 +161,15 @@ def atualizar_vendas():
     query = f'''
         SELECT 
             {selecao}
-            ll.quadra, 
-            ll.lote, 
-            ll.parte, 
+            ll.quadra,
+            ll.lote,
+            ll.parte,
             case when c2.parcela = 0 then c2.valorpago else 0 end as entrada
         FROM lot_lotes ll
         LEFT JOIN contasareceber c2
-        	ON c2.numped = ll.id 
+        	ON c2.numped = ll.id
+        JOIN lot_controle_contrato lcc  
+            ON ll.ID = lcc.ID_lote 
         {colunas}
         WHERE ( 
             lcc.data_entregue IS null and not
@@ -186,7 +187,8 @@ def atualizar_vendas():
             )
         GROUP BY c.CODCLI, ll.id
         ORDER BY ll.DATA_COMPRA ASC '''
-    resultado = executar_query(query)
+    consulta = executar_query(query)
+    resultado = contratos(consulta)
     return resultado
 
 def bloqueados():
@@ -313,4 +315,132 @@ def atualizar_coluna(set_parts, params, id_lote):
 
     return linha > 0
 
-print(atualizar_vendas())
+def finalizados():
+    selecao, colunas = query_base()
+    query =  f'''
+            SELECT
+            {selecao}
+            COALESCE(ll.quadra, lll.quadra) as quadra, 
+            coalesce(ll.lote, lll.lote) as lote,
+            ll.parte,
+            ll.data_compra, 
+            ll.codvendedor
+        FROM lot_controle_contrato lcc
+        LEFT JOIN lot_lotes ll  
+            ON ll.ID = lcc.ID_lote
+        left join lot_lotes_logs lll 
+        	on lcc.id_lote = lll.id
+        	and lll.CODCLI = lcc.codcli
+        	and lll.SITUACAO = 'V'
+        {colunas}
+        where lcc.DATA_ENTREGUE is not null 
+        '''
+    consulta = executar_query(query)
+    resultado = contratos(consulta)
+    return resultado
+
+def criar_contrato(tipo, id_lote, codcli, usuario):
+    query = ('''
+        INSERT INTO lot_controle_contrato
+            (id_lote, codcli, TIPO_ESPECIAL, codvendedor, data_compra)
+        VALUES (%s, %s, %s, %s, NOW())
+    ''')
+
+    params = (tipo, id_lote, codcli, usuario)
+    resultado = executar_query(query, params)
+
+    return resultado > 0
+
+def contratos(consulta):
+    resultado = []
+    for i in consulta:
+        resultados = {
+           'id': i['ID'],
+           'id_lote': i['ID_LOTE'],
+           'lote': None,
+           'cliente': i['cliente'],
+           'tipo_contrato': i['TIPO_ESPECIAL'],
+           'entrada': 0.00,
+           'fantasia': i['fantasia'],
+           'dt_compra': i['data_compra'],
+           'cadastro': {
+               'user': f"{i['rca']} - {i['nome_usuario']}",
+               'data': i['dtcadastro']
+               },
+           'vendedor': f"{i['codvendedor']} - {i['nome_vendedor']}",
+           'colunas': {},
+           'badges':{},
+           'obs': i['OBS']
+        }
+
+        if i.get('parte') != 0 and i.get('parte'):
+            resultados['lote'] = f'{i['quadra']}-{i['lote']:02}/{i['parte']}'
+        else:
+            resultados['lote'] = f'{i['quadra']}-{i['lote']:02}'
+
+        if i.get('entrada') and i.get('TIPO_ESPECIAL') == 'V':
+            resultados['entrada'] = i['entrada']
+
+        if i.get('USER_ENTRADA_PAGA'):
+            resultados['colunas']['assinado-cliente'] = {
+                    'user': i['USER_ENTRADA_PAGA'],
+                    'data': i['DATA_ENTRADA_PAGA']
+                }
+        
+        if i.get('USER_RETIRADA'):
+            resultados['colunas']['aguardando-retirada'] ={
+                    'user': i['USER_RETIRADA'],
+                    'data': i['DATA_RETIRADA']
+                }
+        
+        if i.get('USER_ENTREGUE'):
+            resultados['colunas']['entregue'] = {
+                    'user': f"{i['USER_ENTREGUE']} - {i['nome_entregue']}",
+                    'data': i['DATA_ENTREGUE']
+                }
+
+        if i.get('USER_ETQ_ASSINATURA_DIRETOR'):
+            resultados['badges']['digitalizado'] = {
+                    'user': f"{i['USER_ETQ_ASSINATURA_DIRETOR']} - {i['nome_digitalizado']}",
+                    'data': i['DT_ETQ_ASSINATURA_DIRETOR']
+                }
+            
+        if i.get('USER_ETQ_ENTREGUE'):
+            resultados['badges']['pagamento-OK'] = {
+                    'user': f"{i['USER_ETQ_ENTREGUE']} - {i['nome_pagamento']}",
+                    'data': i['DT_ETQ_ENTREGUE']
+                }
+        
+        if i.get('USER_ETQ_ENTRADA_PAGA'):
+            resultados['badges']['carne-gerado']  ={
+                    'user': f"{i['USER_ETQ_ENTRADA_PAGA']} - {i['nome_carne']}",
+                    'data': i['DT_ETQ_ENTRADA_PAGA']  
+               }
+
+        if i.get('USER_ETQ_RETIRADA'):
+            resultados['badges']['autenticado'] = {
+                    'user': f"{i['USER_ETQ_RETIRADA']} - {i['nome_autenticado']}",
+                    'data': i['DT_ETQ_RETIRADA']  
+               }
+            
+        if i.get('USER_IMPRESSO'):   
+            resultados['badges']['impresso'] = {
+                    'user': f"{i['USER_IMPRESSO']} - {i['nome_impresso']}",
+                    'data': i['DATA_IMPRESSO']  
+               }
+       
+        if i.get('USER_ASSINATURA_DIRETOR'):
+            resultados['badges']['contrato-fisico'] = {
+                        'user': f"{i['USER_ASSINATURA_DIRETOR']} - {i['nome_fisico']}",
+                        'data': i['DATA_ASSINATURA_DIRETOR']  
+        }
+            
+        if i.get('USER_CONTRATO_DIGITAL'):
+            resultados['badges']['contrato-digital'] = {
+                        'user': f"{i['USER_CONTRATO_DIGITAL']} - {i['nome_digital']}",
+                        'data': i['DATA_CONTRATO_DIGITAL'] 
+        }    
+                       
+        resultado.append(resultados)
+    
+    return resultado

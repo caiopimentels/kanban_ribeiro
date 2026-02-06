@@ -2,11 +2,16 @@ document.addEventListener('DOMContentLoaded', () => {
   puxarvendas();
 });
 
+/*
 const API_BASE = location.hostname.startsWith('192.168.') || location.hostname === '10.10.10.5'
   ? 'http://192.168.1.5:5010' 
   : 'http://madribeiro.ddns.net:5010';
 
 const USUARIO_ID = document.getElementById('txtLogin').value;
+*/
+const API_BASE = 'http://192.168.2.63:5010';
+
+const USUARIO_ID = 40
 
 const colunas = [
   { id: 'lotes-bloqueados',     nome: 'Bloqueados' },
@@ -489,11 +494,11 @@ function puxarvendas() {
           empreendimento = `LOT. ${empreendimento.split(" ").slice(1).join(" ")}`
         }
 
-        if (venda.TIPO_ESPECIAL === 'V') {
+        if (venda.tipo_contrato === 'V') {
           descricao = `VENDA - ${empreendimento || ''}`;
-        } else if (venda.TIPO_ESPECIAL === 'T') {
+        } else if (venda.tipo_contrato === 'T') {
           descricao = `TRANSFERENCIA - ${empreendimento || ''}`;
-        } else if (venda.TIPO_ESPECIAL === 'D') {
+        } else if (venda.tipo_contrato === 'D') {
           descricao = `DISTRATO - ${empreendimento || ''}`;
         }
 
@@ -509,7 +514,7 @@ function puxarvendas() {
         const tipoEspecial = `[${tipoVal}] `; 
         
         const nomeVendedor = venda.nome_vendedor ? `(${venda.nome_vendedor}) ` : '';
-        const tituloCard = `${tipoEspecial}${nomeVendedor}${venda.codcli} - ${venda.razao} (${venda.quadra}-${String(venda.lote).padStart(2,'0')}${parte})`;
+        const tituloCard = `${tipoEspecial}${nomeVendedor}${venda.cliente} (${venda.lote})`;
 
         const card = document.createElement('div');
         card.className = 'kanban-card';
@@ -518,15 +523,15 @@ function puxarvendas() {
         card.setAttribute('data-modal', `modal-${venda.id || 'novo'}`);
         card.setAttribute('id_lote', venda.id);
         card.dataset.obs = (venda.OBS || '').trim();
-        if (venda.data_compra) card.dataset.dataVenda = venda.data_compra;
+        if (venda.dt_compra) card.dataset.dataVenda = venda.dt_compra;
 
         card.innerHTML = `
           <div class="badge-cards"></div>
           <div class="dados-card">
-            <p class="card-title">${venda.codcli} - ${venda.razao} (${venda.quadra}-${String(venda.lote).padStart(2,'0')}${parte})</p>
+            <p class="card-title">${venda.cliente} (${venda.lote})</p>
             <div class="card-dados">
               <div class="card-empreendimento">${descricao}</div>
-              <div class="card-corretor">${venda.codvendedor || ''} - ${venda.nome_vendedor}</div>
+              <div class="card-corretor">${venda.vendedor}</div>
             </div>
           </div>`;
 
@@ -539,16 +544,16 @@ function puxarvendas() {
             </button>
             <div class="modal-header">
               <h1 class="modal-title">
-                ${venda.codcli} - ${venda.razao} (${venda.quadra}-${venda.lote})
+                ${venda.cliente} (${venda.lote})
               </h1>
             </div>
             <div class="modal-body">
               <div class="input-group">
                 <div class="input-venda">
                   <label>Corretor:</label>
-                  <input id="corretor" placeholder="${venda.codvendedor || ''} - ${venda.nome_vendedor || ''}" disabled>
+                  <input id="corretor" placeholder="${venda.vendedor}" disabled>
                   <label id="label-data">Data Venda:</label>
-                  <input id="input-data" placeholder="${formatarData(venda.data_compra)}" disabled>
+                  <input id="input-data" placeholder="${formatarData(venda.dt_compra)}" disabled>
                 </div>
               </div>
 
@@ -559,7 +564,7 @@ function puxarvendas() {
                 <input
                       id="email", 
                       name="email" 
-                      placeholder="${venda.rca || ''} ${' - ' + venda.nome_usuario || ''} ${'Data: ' + formatarData(venda.dtcadastro) || ''} ${formatarhorario(venda.dtcadastro) || ''}"
+                      placeholder="${venda.cadastro.user || ''} ${'Data: ' + formatarData(venda.cadastro.data) || ''} ${formatarhorario(venda.cadastro.data) || ''}"
                       disabled>
               </div>
 
@@ -572,10 +577,15 @@ function puxarvendas() {
                       id="email", 
                       name="email" 
                       placeholder="${
-                                  (venda.USER_ETQ_RETIRADA || venda.nome_autenticado || venda.DT_ETQ_RETIRADA)
-                                    ? `${venda.USER_ETQ_RETIRADA || ''} - ${venda.nome_autenticado || ''} Data: ${venda.DT_ETQ_RETIRADA ? formatarData(venda.DT_ETQ_RETIRADA) + ' '+ formatarhorario(venda.DT_ETQ_RETIRADA) : ''}`
-                                    : ''
-                                }"
+                        venda.badges?.autenticado
+                          ? `${venda.badges.autenticado.user || ''} Data: ${
+                              venda.badges.autenticado.data
+                                ? formatarData(venda.badges.autenticado.data) + ' ' +
+                                  formatarhorario(venda.badges.autenticado.data)
+                                : ''
+                            }`
+                          : ''
+                      }"
                       disabled>
               </div>
 
@@ -587,10 +597,15 @@ function puxarvendas() {
                         id="email", 
                         name="email" 
                         placeholder="${
-                                  (venda.USER_ETQ_ENTREGUE || venda.nome_pagamento || venda.DT_ETQ_ENTREGUE)
-                                    ? `${venda.USER_ETQ_ENTREGUE || ''} - ${venda.nome_pagamento || ''} Data: ${venda.DT_ETQ_ENTREGUE ? formatarData(venda.DT_ETQ_ENTREGUE) + ' '+ formatarhorario(venda.DT_ETQ_ENTREGUE) : ''}`
-                                    : ''
-                                }"
+                          venda.badges?.['pagamento-OK']
+                            ? `${venda.badges?.['pagamento-OK'].user || ''} Data: ${
+                                venda.badges?.['pagamento-OK'].data
+                                  ? formatarData(venda.badges?.['pagamento-OK'].data) + ' ' +
+                                    formatarhorario(venda.badges?.['pagamento-OK'].data)
+                                  : ''
+                              }`
+                            : ''
+                        }"
                         disabled>
               </div>
 
@@ -602,10 +617,15 @@ function puxarvendas() {
                         id="email", 
                         name="email" 
                         placeholder="${
-                                  (venda.USER_ETQ_ENTRADA_PAGA || venda.nome_carne || venda.DT_ETQ_ENTRADA_PAGA)
-                                    ? `${venda.USER_ETQ_ENTRADA_PAGA || ''} - ${venda.nome_carne || ''} Data: ${venda.DT_ETQ_ENTRADA_PAGA ? formatarData(venda.DT_ETQ_ENTRADA_PAGA) + ' '+ formatarhorario(venda.DT_ETQ_ENTRADA_PAGA) : ''}`
-                                    : ''
-                                }"
+                          venda.badges?.['carne-gerado']
+                            ? `${venda.badges?.['carne-gerado'].user || ''} Data: ${
+                                venda.badges?.['carne-gerado'].data
+                                  ? formatarData(venda.badges?.['carne-gerado'].data) + ' ' +
+                                    formatarhorario(venda.badges?.['carne-gerado'].data)
+                                  : ''
+                              }`
+                            : ''
+                        }"
                         disabled>
               </div>
 
@@ -617,10 +637,15 @@ function puxarvendas() {
                         id="email", 
                         name="email" 
                         placeholder="${
-                                  (venda.USER_ETQ_ASSINATURA_DIRETOR || venda.nome_digitalizado || venda.DT_ETQ_ASSINATURA_DIRETOR)
-                                    ? `${venda.USER_ETQ_ASSINATURA_DIRETOR || ''} - ${venda.nome_digitalizado || ''} Data: ${venda.DT_ETQ_ASSINATURA_DIRETOR ? formatarData(venda.DT_ETQ_ASSINATURA_DIRETOR) + ' '+ formatarhorario(venda.DT_ETQ_ASSINATURA_DIRETOR) : ''}`
-                                    : ''
-                                }"
+                          venda.badges?.digitalizado
+                            ? `${venda.badges.digitalizado.user || ''} Data: ${
+                                venda.badges.digitalizado.data
+                                  ? formatarData(venda.badges.digitalizado.data) + ' ' +
+                                    formatarhorario(venda.badges.digitalizado.data)
+                                  : ''
+                              }`
+                            : ''
+                        }"
                         disabled>
               </div>
               
@@ -632,10 +657,15 @@ function puxarvendas() {
                         id="email", 
                         name="email" 
                         placeholder="${
-                                  (venda.USER_IMPRESSO || venda.nome_impresso || venda.DATA_IMPRESSO)
-                                    ? `${venda.USER_IMPRESSO || ''} - ${venda.nome_impresso || ''} Data: ${venda.DATA_IMPRESSO ? formatarData(venda.DATA_IMPRESSO) + ' '+ formatarhorario(venda.DATA_IMPRESSO) : ''}`
-                                    : ''
-                                }"
+                          venda.badges?.impresso
+                            ? `${venda.badges.impresso.user || ''} Data: ${
+                                venda.badges.impresso.data
+                                  ? formatarData(venda.badges.impresso.data) + ' ' +
+                                    formatarhorario(venda.badges.impresso.data)
+                                  : ''
+                              }`
+                            : ''
+                        }"
                         disabled>
               </div>
 
@@ -648,10 +678,15 @@ function puxarvendas() {
                         id="email", 
                         name="email" 
                         placeholder="${
-                                  (venda.USER_ENTREGUE || venda.nome_entregue || venda.DATA_ENTREGUE)
-                                    ? `${venda.USER_ENTREGUE || ''} - ${venda.nome_entregue || ''} Data: ${venda.DATA_ENTREGUE ? formatarData(venda.DATA_ENTREGUE) + ' '+ formatarhorario(venda.DATA_ENTREGUE) : ''}`
-                                    : ''
-                                }"
+                          venda.colunas?.entregue
+                            ? `${venda.colunas?.entregue.user || ''} Data: ${
+                                venda.colunas?.entregue.data
+                                  ? formatarData(venda.colunas?.entregue.data) + ' ' +
+                                    formatarhorario(venda.colunas?.entregue.data)
+                                  : ''
+                              }`
+                            : ''
+                        }"
                         disabled>
               </div>
 
@@ -663,7 +698,7 @@ function puxarvendas() {
                         id="email", 
                         name="email"
                         class="observacao-input"
-                        value="${venda.OBS || ''}"
+                        value="${venda.obs || ''}"
                         placeholder="Digite aqui uma observação"
                         >
               </div>
@@ -863,18 +898,16 @@ function criarCardBasico(venda) {
           empreendimento = `LOT. ${empreendimento.split(" ").slice(1).join(" ")}`
         }
 
-        if (venda.TIPO_ESPECIAL === 'V') {
+        if (venda.tipo_contrato === 'V') {
           descricao = `VENDA - ${empreendimento || ''}`;
-        } else if (venda.TIPO_ESPECIAL === 'T') {
+        } else if (venda.tipo_contrato === 'T') {
           descricao = `TRANSFERENCIA - ${empreendimento || ''}`;
-        } else if (venda.TIPO_ESPECIAL === 'D') {
+        } else if (venda.tipo_contrato === 'D') {
           descricao = `DISTRATO - ${empreendimento || ''}`;
         }
-
-        const parte = venda.parte ? `/${venda.parte}` : "";
+      
         
-        
-        let tipoVal = (venda.TIPO_ESPECIAL || '').trim().toUpperCase();
+        let tipoVal = (venda.tipo_contrato || '').trim().toUpperCase();
         if (tipoVal === '') {
             tipoVal = 'V';
         }
@@ -882,23 +915,23 @@ function criarCardBasico(venda) {
         
         const tipoEspecial = `[${tipoVal}] `; 
         
-        const nomeVendedor = venda.nome_vendedor ? `(${venda.nome_vendedor}) ` : '';
-        const tituloCard = `${tipoEspecial}${nomeVendedor}${venda.codcli} - ${venda.razao} (${venda.quadra}-${String(venda.lote).padStart(2,'0')}${parte})`;
+        const nomeVendedor = venda.vendedor ? `(${venda.vendedor}) ` : '';
+        const tituloCard = `${tipoEspecial}${nomeVendedor}${venda.cliente} (${venda.lote})`;
 
         const card = document.createElement('div');
         card.className = 'kanban-card';
         card.setAttribute('draggable', 'true');
         card.setAttribute('data-modal', `modal-${venda.id || 'novo'}`);
         card.setAttribute('id_lote', venda.id);
-        if (venda.data_compra) card.dataset.dataVenda = venda.data_compra;
+        if (venda.dt_compra) card.dataset.dataVenda = venda.dt_compra;
 
         card.innerHTML = `
           <div class="badge-cards"></div>
           <div class="dados-card">
-            <p class="card-title">${venda.codcli} - ${venda.razao} (${venda.quadra}-${String(venda.lote).padStart(2,'0')}${parte})</p>
+            <p class="card-title">${venda.cliente} (${venda.lote})</p>
             <div class="card-dados">
               <div class="card-empreendimento">${descricao}</div>
-              <div class="card-corretor">${venda.codvendedor || ''} - ${venda.nome_vendedor}</div>
+              <div class="card-corretor">${venda.vendedor}</div>
             </div>
           </div>`;
 

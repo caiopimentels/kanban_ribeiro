@@ -6,6 +6,8 @@ from rotas.rotas import *
 logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
+app.json.sort_keys = False
+app.json.ensure_ascii = False
 CORS(app)
 
 '''
@@ -142,70 +144,9 @@ def get_badges():
 @app.route('/entregues/finalizados')
 #@require_auth
 def contratos_finalizados():
-    '''
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    '''
-    query = '''
-        SELECT 
-            ll.codcli, 
-            c.razao, 
-            c.rca,
-            lv2.nome AS nome_usuario,
-            autenticado.nome AS nome_autenticado,
-            pagamento.nome AS nome_pagamento,
-            carne.nome AS nome_carne,
-            digitalizado.nome AS nome_digitalizado,
-            entregue.nome AS nome_entregue,
-            fisico.nome AS nome_fisico,
-            digital.nome AS nome_digital,
-            impresso.nome AS nome_impresso,
-            c.dtcadastro,
-            COALESCE(ll.quadra, lll.quadra) as quadra, 
-            coalesce(ll.lote, lll.lote) as lote, 
-            ll.data_compra, 
-            ll.codvendedor,
-            ll.parte,
-            lv.nome AS nome_vendedor, 
-            le.fantasia,
-            lcc.*
-        FROM lot_controle_contrato lcc
-        LEFT JOIN lot_lotes ll  
-            ON ll.ID = lcc.ID_lote
-        left join lot_lotes_logs lll 
-        	on lcc.id_lote = lll.id
-        	and lll.CODCLI = lcc.codcli
-        	and lll.SITUACAO = 'V'
-        JOIN cadcli c 
-            ON  c.CODCLI = lcc.CODCLI
-        left JOIN lot_empreendimento le  
-            ON ll.ID_EMPREENDIMENTO = le.ID
-        JOIN lot_vendedores lv 
-            ON lcc.CODVENDEDOR = lv.login 
-        JOIN lot_vendedores lv2 
-            ON c.rca = lv2.login 
-        LEFT JOIN lot_vendedores entregue 
-            ON lcc.USER_ENTREGUE = entregue.login
-        LEFT JOIN lot_vendedores carne 
-            ON lcc.USER_ETQ_ENTRADA_PAGA = carne.login
-        LEFT JOIN lot_vendedores pagamento 
-            ON lcc.USER_ETQ_ENTREGUE = pagamento.login
-        LEFT JOIN lot_vendedores digitalizado 
-            ON lcc.USER_ETQ_ASSINATURA_DIRETOR = digitalizado.login
-        LEFT JOIN lot_vendedores fisico 
-            ON lcc.USER_ASSINATURA_DIRETOR = fisico.login
-        LEFT JOIN lot_vendedores digital 
-            ON lcc.USER_CONTRATO_DIGITAL = digital.login
-        LEFT JOIN lot_vendedores impresso 
-            ON lcc.USER_IMPRESSO = impresso.login
-        LEFT JOIN lot_vendedores autenticado 
-            ON lcc.USER_ETQ_RETIRADA = autenticado.login
-        where lcc.DATA_ENTREGUE is not null 
-        '''
-    '''
-    cursor.execute(query)
-    results = cursor.fetchall()
-    return jsonify(results)'''
+    results = finalizados()
+
+    return jsonify(results)
 
 @app.route('/consulta', methods=['POST'])
 #@require_auth
@@ -263,21 +204,10 @@ def criar_contrato_especial():
     if not all([tipo, id_lote, codcli, usuario]):
         return jsonify({"error": "Dados incompletos"}), 400
 
-    '''
-    conn = get_connection()
-    cursor = conn.cursor()
+    resultado = criar_contrato()
 
-    cursor.execute("""
-        INSERT INTO lot_controle_contrato
-            (id_lote, codcli, TIPO_ESPECIAL, codvendedor, data_compra)
-        VALUES (%s, %s, %s, %s, NOW())
-    """, (id_lote, codcli, tipo, usuario))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return jsonify({"message": "Contrato especial criado com sucesso"}), 201'''
+    if resultado:
+        return jsonify({"message": "Contrato especial criado com sucesso"}), 201
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5010)
