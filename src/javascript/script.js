@@ -843,7 +843,8 @@ function adicionarListenersModalEspecial() {
 
             if (!consultaRes.ok) throw new Error("Lote não encontrado");
 
-            const info = await consultaRes.json();
+            const arr = await consultaRes.json();
+            const info = Array.isArray(arr) ? arr[0] : arr;
 
             const msg = 
 `Confirma a criação do contrato de ${tipoLabel.toUpperCase()} para ${info.nome} do lote ${info.quadra}-\

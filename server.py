@@ -196,7 +196,7 @@ def criar_contrato_especial():
     if not all([tipo, id_lote, codcli, usuario]):
         return jsonify({"error": "Dados incompletos"}), 400
 
-    resultado = criar_contrato()
+    resultado = criar_contrato(tipo, id_lote, codcli, usuario)
 
     if resultado:
         return jsonify({"message": "Contrato especial criado com sucesso"}), 201
