@@ -134,18 +134,10 @@ def atualizar_kanban():
 
     return resultado > 0
 
-@app.route('/badges')
-#@require_auth
-def get_badges():
-    
-    results = badges()
-    return jsonify(results)
-
 @app.route('/entregues/finalizados')
 #@require_auth
 def contratos_finalizados():
     results = finalizados()
-
     return jsonify(results)
 
 @app.route('/consulta', methods=['POST'])

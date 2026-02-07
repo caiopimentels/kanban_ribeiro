@@ -39,11 +39,11 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                       id="email", 
                       name="email" 
                       placeholder="${
-                        venda.badges?.autenticado
-                          ? `${venda.badges.autenticado.user || ''} Data: ${
-                              venda.badges.autenticado.data
-                                ? formatarData(venda.badges.autenticado.data) + ' ' +
-                                  formatarhorario(venda.badges.autenticado.data)
+                        venda.badges?.Autenticado
+                          ? `${venda.badges.Autenticado.user || ''} Data: ${
+                              venda.badges.Autenticado.data
+                                ? formatarData(venda.badges.Autenticado.data) + ' ' +
+                                  formatarhorario(venda.badges.Autenticado.data)
                                 : ''
                             }`
                           : ''
@@ -59,11 +59,11 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                         id="email", 
                         name="email" 
                         placeholder="${
-                          venda.badges?.['pagamento-OK']
-                            ? `${venda.badges?.['pagamento-OK'].user || ''} Data: ${
-                                venda.badges?.['pagamento-OK'].data
-                                  ? formatarData(venda.badges?.['pagamento-OK'].data) + ' ' +
-                                    formatarhorario(venda.badges?.['pagamento-OK'].data)
+                          venda.badges?.['Pagamento-OK']
+                            ? `${venda.badges?.['Pagamento-OK'].user || ''} Data: ${
+                                venda.badges?.['Pagamento-OK'].data
+                                  ? formatarData(venda.badges?.['Pagamento-OK'].data) + ' ' +
+                                    formatarhorario(venda.badges?.['Pagamento-OK'].data)
                                   : ''
                               }`
                             : ''
@@ -79,11 +79,11 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                         id="email", 
                         name="email" 
                         placeholder="${
-                          venda.badges?.['carne-gerado']
-                            ? `${venda.badges?.['carne-gerado'].user || ''} Data: ${
-                                venda.badges?.['carne-gerado'].data
-                                  ? formatarData(venda.badges?.['carne-gerado'].data) + ' ' +
-                                    formatarhorario(venda.badges?.['carne-gerado'].data)
+                          venda.badges?.['Carne-Gerado']
+                            ? `${venda.badges?.['Carne-Gerado'].user || ''} Data: ${
+                                venda.badges?.['Carne-Gerado'].data
+                                  ? formatarData(venda.badges?.['Carne-Gerado'].data) + ' ' +
+                                    formatarhorario(venda.badges?.['Carne-Gerado'].data)
                                   : ''
                               }`
                             : ''
@@ -99,11 +99,11 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                         id="email", 
                         name="email" 
                         placeholder="${
-                          venda.badges?.digitalizado
-                            ? `${venda.badges.digitalizado.user || ''} Data: ${
-                                venda.badges.digitalizado.data
-                                  ? formatarData(venda.badges.digitalizado.data) + ' ' +
-                                    formatarhorario(venda.badges.digitalizado.data)
+                          venda.badges?.Digitalizado
+                            ? `${venda.badges.Digitalizado.user || ''} Data: ${
+                                venda.badges.Digitalizado.data
+                                  ? formatarData(venda.badges.Digitalizado.data) + ' ' +
+                                    formatarhorario(venda.badges.Digitalizado.data)
                                   : ''
                               }`
                             : ''
@@ -119,11 +119,11 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                         id="email", 
                         name="email" 
                         placeholder="${
-                          venda.badges?.impresso
-                            ? `${venda.badges.impresso.user || ''} Data: ${
-                                venda.badges.impresso.data
-                                  ? formatarData(venda.badges.impresso.data) + ' ' +
-                                    formatarhorario(venda.badges.impresso.data)
+                          venda.badges?.Impresso
+                            ? `${venda.badges.Impresso.user || ''} Data: ${
+                                venda.badges.Impresso.data
+                                  ? formatarData(venda.badges.Impresso.data) + ' ' +
+                                    formatarhorario(venda.badges.Impresso.data)
                                   : ''
                               }`
                             : ''
@@ -166,14 +166,5 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
               </div>
 
             </div>
-          </form>
-          <div class="modal-status">
-            <div class="badge Autenticado"><span>Autenticado</span></div>
-            <div class="badge Pagamento-OK"><span>Pagamento OK</span></div>
-            <div class="badge Carne-Gerado"><span>Carnê Gerado</span></div>
-            <div class="badge Digitalizado"><span>Digitalizado</span></div>
-            <div class="badge Fisico"><span>Fisico</span></div>
-            <div class="badge Digital"><span>Digital</span></div>
-            <div class="badge Impresso"><span>Impresso</span></div>
-          </div>`;
+          </form>`;
 }

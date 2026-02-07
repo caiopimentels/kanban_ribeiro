@@ -116,7 +116,7 @@ body{
     justify-content: center;
 }
 
-.badge.Fisico{
+.badge.contrato-fisico{
     background-color: #eeff00;
     color: rgb(0, 0, 0);
     font-size: 11px;
@@ -125,7 +125,7 @@ body{
     justify-content: center;
 }
 
-.badge.Digital{
+.badge.contrato-digital{
     background-color: #eeff00;
     color: rgb(0, 0, 0);
     font-size: 11px;

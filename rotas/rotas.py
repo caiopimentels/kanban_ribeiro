@@ -218,62 +218,6 @@ def bloqueados():
     resultado = executar_query(query)
     return resultado
 
-def badges():
-    clientes = atualizar_vendas()
-
-    clientes = [row['ID'] for row in clientes]
-
-    if not clientes:
-        return []
-
-    placeholders = ",".join(["%s"] * len(clientes))
-    params = clientes
-
-    query = f"""
-        SELECT
-            id as id_lote,
-            USER_ENTRADA_PAGA,
-            USER_ASSINATURA_DIRETOR,
-            USER_CONTRATO_DIGITAL,
-            USER_RETIRADA,
-            USER_ENTREGUE,
-            USER_ETQ_ENTRADA_PAGA,
-            USER_ETQ_ASSINATURA_DIRETOR,
-            USER_ETQ_RETIRADA,
-            USER_ETQ_ENTREGUE,
-            USER_IMPRESSO
-        FROM lot_controle_contrato
-        WHERE id IN ({placeholders})
-    """
-
-    rows = executar_query(query, params)
-
-    resultado = []
-    for row in rows:
-        badges = []
-        
-        if row["USER_ETQ_ENTRADA_PAGA"]:
-            badges.append("Carne-Gerado")
-        if row["USER_ETQ_ASSINATURA_DIRETOR"]:
-            badges.append("Digitalizado")
-        if row["USER_ETQ_RETIRADA"]:
-            badges.append("Autenticado")
-        if row["USER_ETQ_ENTREGUE"]:
-            badges.append("Pagamento-OK")
-        if row["USER_ASSINATURA_DIRETOR"]:
-            badges.append("Fisico")
-        if row["USER_CONTRATO_DIGITAL"]:
-            badges.append("Digital")
-        if row["USER_IMPRESSO"]:
-            badges.append("Impresso")
-
-        resultado.append({
-            "id_lote": row["id_lote"],
-            "badges": badges
-        })
-
-    return resultado
-
 def consultar_lote(id_lote):
     query = '''
         SELECT  
@@ -400,31 +344,31 @@ def contratos(consulta):
                 }
 
         if i.get('USER_ETQ_ASSINATURA_DIRETOR'):
-            resultados['badges']['digitalizado'] = {
+            resultados['badges']['Digitalizado'] = {
                     'user': f"{i['USER_ETQ_ASSINATURA_DIRETOR']} - {i['nome_digitalizado']}",
                     'data': i['DT_ETQ_ASSINATURA_DIRETOR']
                 }
             
         if i.get('USER_ETQ_ENTREGUE'):
-            resultados['badges']['pagamento-OK'] = {
+            resultados['badges']['Pagamento-OK'] = {
                     'user': f"{i['USER_ETQ_ENTREGUE']} - {i['nome_pagamento']}",
                     'data': i['DT_ETQ_ENTREGUE']
                 }
         
         if i.get('USER_ETQ_ENTRADA_PAGA'):
-            resultados['badges']['carne-gerado']  ={
+            resultados['badges']['Carne-Gerado']  ={
                     'user': f"{i['USER_ETQ_ENTRADA_PAGA']} - {i['nome_carne']}",
                     'data': i['DT_ETQ_ENTRADA_PAGA']  
                }
 
         if i.get('USER_ETQ_RETIRADA'):
-            resultados['badges']['autenticado'] = {
+            resultados['badges']['Autenticado'] = {
                     'user': f"{i['USER_ETQ_RETIRADA']} - {i['nome_autenticado']}",
                     'data': i['DT_ETQ_RETIRADA']  
                }
             
         if i.get('USER_IMPRESSO'):   
-            resultados['badges']['impresso'] = {
+            resultados['badges']['Impresso'] = {
                     'user': f"{i['USER_IMPRESSO']} - {i['nome_impresso']}",
                     'data': i['DATA_IMPRESSO']  
                }

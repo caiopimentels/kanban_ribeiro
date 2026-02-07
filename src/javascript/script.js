@@ -136,8 +136,8 @@ function modalstatus() {
       const etapa = badgeEl.classList[1];
       const id_lote = card.getAttribute('id_lote');
 
-      if (etapa === 'Fisico'){
-        const digitalNoModal = modal.querySelector('.modal-status .badge.Digital');
+      if (etapa === 'contrato-fisico'){
+        const digitalNoModal = modal.querySelector('.modal-status .badge.contrato-digital');
         if (digitalNoModal) digitalNoModal.remove();
           const jaTemImpresso = badgeCards.querySelector('.badge.Impresso');
         if (!jaTemImpresso) {
@@ -148,8 +148,8 @@ function modalstatus() {
        }
       }
 
-      if (etapa === 'Digital'){
-        const fisicoNoModal = modal.querySelector('.modal-status .badge.Fisico');
+      if (etapa === 'contrato-digital'){
+        const fisicoNoModal = modal.querySelector('.modal-status .badge.contrato-fisico');
         if (fisicoNoModal) fisicoNoModal.remove();
           const jaTemAutenticado = badgeCards.querySelector('.badge.Autenticado');
         if (!jaTemAutenticado) {
@@ -452,9 +452,9 @@ async function aplicarFiltro() {
 }
 
 function determinarcoluna(venda) {
-  if (venda.DATA_ENTREGUE) return 'entregue';
-  if (venda.DATA_RETIRADA) return 'aguardando-retirada';
-  if (venda.DATA_ENTRADA_PAGA) return 'assinado-cliente';
+  if (venda.colunas?.entregue?.data) return 'entregue';
+  if (venda.colunas?.['aguardando-retirada']?.data) return 'aguardando-retirada';
+  if (venda.colunas?.['assinado-cliente']?.data) return 'assinado-cliente';
   return 'contrato-gerado';
 }
 
@@ -524,15 +524,20 @@ function puxarvendas() {
         card.setAttribute('id_lote', venda.id);
         card.dataset.obs = (venda.OBS || '').trim();
         if (venda.dt_compra) card.dataset.dataVenda = venda.dt_compra;
+        
+        card.innerHTML = window.templateCardVenda(venda, descricao);
 
-        card.innerHTML = `
-          <div class="badge-cards"></div>
-          <div class="dados-card">
-            <p class="card-title">${venda.cliente} (${venda.lote})</p>
-            <div class="card-dados">
-              <div class="card-empreendimento">${descricao}</div>
-              <div class="card-corretor">${venda.vendedor}</div>
-            </div>
+        const badge_status = document.createElement('div');
+
+        badge_status.innerHTML = `
+          <div class="modal-status">
+            <div class="badge Autenticado"><span>Autenticado</span></div>
+            <div class="badge Pagamento-OK"><span>Pagamento OK</span></div>
+            <div class="badge Carne-Gerado"><span>Carnê Gerado</span></div>
+            <div class="badge Digitalizado"><span>Digitalizado</span></div>
+            <div class="badge contrato-fisico"><span>Fisico</span></div>
+            <div class="badge contrato-digital"><span>Digital</span></div>
+            <div class="badge Impresso"><span>Impresso</span></div>
           </div>`;
 
         const modal = document.createElement('dialog');
@@ -543,6 +548,8 @@ function puxarvendas() {
           formatarhorario
         );
         
+        modal.appendChild(badge_status);
+
         if (venda.tipo_contrato === 'D') {
           const carneBtn = modal.querySelector('.modal-status .badge.Carne-Gerado');
           if (carneBtn) carneBtn.remove();
@@ -582,66 +589,10 @@ function puxarvendas() {
 
         kanban.appendChild(card);
         document.body.appendChild(modal);
+        carregarbadges(venda)
       });
 
-      // carrega badges
-      fetch(`${API_BASE}/badges`,{
-        headers: {
-        'Authorization': 'Bearer ' + window.KANBAN_TOKEN
-      }
-      })
-      .then(res => res.json())
-      .then(dados => {
-        const norm = s => (s || '').trim().replace(/\s+/g, '-'); // "Pagamento OK" -> "Pagamento-OK"
-        const oppositeOf = s => s === 'Fisico' ? 'Digital' : (s === 'Digital' ? 'Fisico' : null);
-    
-        dados.forEach(item => {
-          const card = document.querySelector(`.kanban-card[id_lote="${item.id_lote}"]`);
-          if (!card) return;
-
-          if (card.closest('#lotes-bloqueados')) return;
-    
-          const badgeContainer = card.querySelector('.badge-cards');
-          const modalId = card.getAttribute('data-modal');
-          const modal = document.getElementById(modalId);
-    
-          (item.badges || []).forEach(raw => {
-            const etapa = norm(raw); // ex.: "Fisico", "Digital", "Pagamento-OK"
-    
-            // 1) Não criar duplicado no card
-            if (!badgeContainer.querySelector(`.badge.${CSS.escape(etapa)}`)) {
-              const badge = document.createElement('span');
-              badge.className = `badge ${etapa}`;
-              badge.textContent = etapa.replace(/-/g, ' ');
-              badgeContainer.appendChild(badge);
-            }
-
-            if (etapa === 'Pagamento-OK') {
-              const entradaBadge = badgeContainer.querySelector('.badge.Entrada-Confirmada');
-              if (entradaBadge) entradaBadge.remove();
-            }
-    
-            // 2) Esconder o MESMO no modal (se existir)
-            if (modal) {
-              const thisBtn = modal.querySelector(`.modal-status .badge.${CSS.escape(etapa)}`);
-              if (thisBtn) thisBtn.style.display = 'none';
-    
-              // 3) Exclusão mútua: Fisico x Digital
-              const opp = oppositeOf(etapa);
-              if (opp) {
-                // remove o oposto do modal (pra não poder clicar)
-                const oppBtn = modal.querySelector(`.modal-status .badge.${CSS.escape(opp)}`);
-                if (oppBtn) oppBtn.remove();
-    
-                // remove o oposto do card (se por acaso já estava)
-                const oppChip = badgeContainer.querySelector(`.badge.${CSS.escape(opp)}`);
-                if (oppChip) oppChip.remove();
-              }
-            }
-          });
-        });
-      })
-      .catch(err => console.error('Erro ao carregar badges:', err));
+      
     
 
       puxarbloqueados();
@@ -654,6 +605,63 @@ function puxarvendas() {
     })
     .catch(err => console.error('Erro ao carregar vendas:', err));
 }
+
+function carregarbadges(venda){
+  const dados = [{
+    id_lote: venda.id,                 // 👈 NÃO muda
+    badges: Object.keys(venda.badges || {}) // 👈 chave do objeto vira array
+  }];
+    const norm = s => (s || '').trim().replace(/\s+/g, '-'); // "Pagamento OK" -> "Pagamento-OK"
+    const oppositeOf = s => s === 'contrato-fisico' ? 'contrato-digital' : (s === 'contrato-digital' ? 'contrato-fisico' : null);
+
+    dados.forEach(item => {
+      const card = document.querySelector(`.kanban-card[id_lote="${item.id_lote}"]`);
+      if (!card) return;
+
+      if (card.closest('#lotes-bloqueados')) return;
+
+      const badgeContainer = card.querySelector('.badge-cards');
+      const modalId = card.getAttribute('data-modal');
+      const modal = document.getElementById(modalId);
+
+      (item.badges || []).forEach(raw => {
+        const etapa = norm(raw); // ex.: "Fisico", "Digital", "Pagamento-OK"
+
+        // 1) Não criar duplicado no card
+        if (!badgeContainer.querySelector(`.badge.${CSS.escape(etapa)}`)) {
+          const badge = document.createElement('span');
+          badge.className = `badge ${etapa}`;
+          if (etapa === 'contrato-fisico') badge.textContent = 'Fisico';
+          else if (etapa === 'contrato-digital') badge.textContent = 'Digital';
+          else badge.textContent = etapa.replace(/-/g, ' ');
+          badgeContainer.appendChild(badge);
+        }
+
+        if (etapa === 'Pagamento-OK') {
+          const entradaBadge = badgeContainer.querySelector('.badge.Entrada-Confirmada');
+          if (entradaBadge) entradaBadge.remove();
+        }
+
+        if (modal) {
+          // 1) etapas normais: remove do modal
+          if (!etapa.startsWith('contrato-')) {
+            const thisBtn = modal.querySelector(`.modal-status .badge.${CSS.escape(etapa)}`);
+            if (thisBtn) thisBtn.remove();
+          }
+
+          // 2) contrato: remove os dois do modal
+          if (etapa.startsWith('contrato-')) {
+            const btnFis = modal.querySelector('.modal-status .badge.contrato-fisico');
+            if (btnFis) btnFis.remove();
+
+            const btnDig = modal.querySelector('.modal-status .badge.contrato-digital');
+            if (btnDig) btnDig.remove();
+          }
+        }
+
+      });
+    });
+  }
 
 function puxarbloqueados() {
   fetch(`${API_BASE}/bloqueado`, {
@@ -753,153 +761,24 @@ function criarCardBasico(venda) {
         card.setAttribute('id_lote', venda.id);
         if (venda.dt_compra) card.dataset.dataVenda = venda.dt_compra;
 
-        card.innerHTML = `
-          <div class="badge-cards"></div>
-          <div class="dados-card">
-            <p class="card-title">${venda.cliente} (${venda.lote})</p>
-            <div class="card-dados">
-              <div class="card-empreendimento">${descricao}</div>
-              <div class="card-corretor">${venda.vendedor}</div>
-            </div>
-          </div>`;
+        card.innerHTML = window.templateCardVenda(venda, descricao);
 
-  let modal = document.getElementById(`modal-${venda.id}`);
-  if (!modal) {
-    modal = document.createElement('dialog');
-    modal.id = `modal-${venda.id}`;
-    modal.innerHTML = `
-      <form>
-            <button class="close-modal" data-modal="modal-${venda.id}" type="button">
-              <i class="fa-solid fa-circle-xmark"></i>
-            </button>
-            <div class="modal-header">
-              <h1 class="modal-title">
-                ${venda.codcli} - ${venda.razao} (${venda.quadra}-${venda.lote})
-              </h1>
-            </div>
-            <div class="modal-body">
-              <div class="input-group">
-                <div class="input-venda">
-                  <label>Corretor:</label>
-                  <input id="corretor" placeholder="${venda.codvendedor || ''} - ${venda.nome_vendedor || ''}" disabled>
-                  <label id="label-data">Data Venda:</label>
-                  <input id="input-data" placeholder="${formatarData(venda.data_compra)}" disabled>
-                </div>
-              </div>
-              <div class="input-group">
-                            <label for="email">
-                                Autenticação:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  placeholder="${
-                                  (venda.USER_ETQ_RETIRADA || venda.nome_autenticado || venda.DT_ETQ_RETIRADA)
-                                    ? `${venda.USER_ETQ_RETIRADA || ''} - ${venda.nome_autenticado || ''} Data: ${venda.DT_ETQ_RETIRADA ? formatarData(venda.DT_ETQ_RETIRADA) + ' '+ formatarhorario(venda.DT_ETQ_RETIRADA) : ''}`
-                                    : ''
-                                }"
-                                  disabled>
+        let modal = document.getElementById(`modal-${venda.id}`);
+        if (!modal) {
+          const modal = document.createElement('dialog');
+          modal.id = `modal-${venda.id}`;
+          modal.innerHTML = window.templateModalVenda(
+            venda,
+            formatarData,
+            formatarhorario
+          );
 
-                        </div>
+          modal.addEventListener('click', e => { if (e.target.closest('.close-modal')) modal.close(); });
+          document.body.appendChild(modal);
+        }
 
-                        <div class="input-group">
-                            <label for="email">
-                                Confirmação de Pagamento:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  placeholder="${
-                                  (venda.USER_ETQ_ENTREGUE || venda.nome_pagamento || venda.DT_ETQ_ENTREGUE)
-                                    ? `${venda.USER_ETQ_ENTREGUE || ''} - ${venda.nome_pagamento || ''} Data: ${venda.DT_ETQ_ENTREGUE ? formatarData(venda.DT_ETQ_ENTREGUE) + ' '+ formatarhorario(venda.DT_ETQ_ENTREGUE) : ''}`
-                                    : ''
-                                }"
-                                  disabled>
-
-                        </div>
-
-                        <div class="input-group">
-                            <label for="email">
-                                Carnê Gerado:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  placeholder="${
-                                  (venda.USER_ETQ_ENTRADA_PAGA || venda.nome_carne || venda.DT_ETQ_ENTRADA_PAGA)
-                                    ? `${venda.USER_ETQ_ENTRADA_PAGA || ''} - ${venda.nome_carne || ''} Data: ${venda.DT_ETQ_ENTRADA_PAGA ? formatarData(venda.DT_ETQ_ENTRADA_PAGA) + ' '+ formatarhorario(venda.DT_ETQ_ENTRADA_PAGA) : ''}`
-                                    : ''
-                                }"
-                                  disabled>
-
-                        </div>
-
-                        <div class="input-group">
-                            <label for="email">
-                                Digitalização:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  placeholder="${
-                                  (venda.USER_ETQ_ASSINATURA_DIRETOR || venda.nome_digitalizado || venda.DT_ETQ_ASSINATURA_DIRETOR)
-                                    ? `${venda.USER_ETQ_ASSINATURA_DIRETOR || ''} - ${venda.nome_digitalizado || ''} Data: ${venda.DT_ETQ_ASSINATURA_DIRETOR ? formatarData(venda.DT_ETQ_ASSINATURA_DIRETOR) + ' '+ formatarhorario(venda.DT_ETQ_ASSINATURA_DIRETOR) : ''}`
-                                    : ''
-                                }"
-                                  disabled>
-
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="email">
-                                Impressão:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  placeholder="${
-                                            (venda.USER_IMPRESSO || venda.nome_impresso || venda.DATA_IMPRESSO)
-                                              ? `${venda.USER_IMPRESSO || ''} - ${venda.nome_impresso || ''} Data: ${venda.DATA_IMPRESSO ? formatarData(venda.DATA_IMPRESSO) + ' '+ formatarhorario(venda.DATA_IMPRESSO) : ''}`
-                                              : ''
-                                          }"
-                                  disabled>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="email">
-                                Entregue:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  placeholder="${
-                                  (venda.USER_ENTREGUE || venda.nome_entregue || venda.DATA_ENTREGUE)
-                                    ? `${venda.USER_ENTREGUE || ''} - ${venda.nome_entregue || ''} Data: ${venda.DATA_ENTREGUE ? formatarData(venda.DATA_ENTREGUE) + ' '+ formatarhorario(venda.DATA_ENTREGUE) : ''}`
-                                    : ''
-                                }"
-                                  disabled>
-                        </div>
-                        
-                        <div class="input-group">
-                            <label for="email">
-                                Observação:
-                            </label>
-                            <input
-                                  id="email", 
-                                  name="email" 
-                                  class="observacao-input"
-                                  placeholder="${venda.OBS || ' '}"
-                                  disabled>
-                        </div>
-
-            </div>
-          </form>`;
-    modal.addEventListener('click', e => { if (e.target.closest('.close-modal')) modal.close(); });
-    document.body.appendChild(modal);
-  }
-
-  return card;
-}
+        return card;
+      }
 function renderizarEntreguesFinalizados(listaVendasFinalizadas) {
   const container = getEntregueContainer();
   if (!container) return;
@@ -922,33 +801,8 @@ function renderizarEntreguesFinalizados(listaVendasFinalizadas) {
     }
 
     container.appendChild(card);
+    carregarbadges(venda)
   });
-
-  fetch(`${API_BASE}/badges`, {
-    headers: {
-    'Authorization': 'Bearer ' + window.KANBAN_TOKEN
-  }
-  })
-        .then(res => res.json())
-        .then(dados => {
-          dados.forEach(item => {
-            const card = container.querySelector(`.kanban-card[id_lote="${item.id_lote}"]`);
-            if (!card) return;
-            const badgeContainer = card.querySelector('.badge-cards');
-            item.badges.forEach(etapa => {
-              const badge = document.createElement('span');
-              badge.className = `badge ${etapa}`;
-              badge.textContent = etapa.replace('-', ' ');
-              badgeContainer.appendChild(badge);
-              const modalId = card.getAttribute('data-modal');
-              const modal = document.getElementById(modalId);
-              if (modal) {
-                const badgeNoModal = modal.querySelector(`.modal-status .badge.${etapa}`);
-                if (badgeNoModal) badgeNoModal.style.display = 'none';
-              }
-            });
-          });
-        });
 
   adicionarListenersCards();
   adicionarListenersColunas();
