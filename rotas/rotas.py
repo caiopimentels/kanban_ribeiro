@@ -1,19 +1,6 @@
 
 from db.conexao         import executar_query
 
-etapas = {
-    "assinado-cliente": ("USER_ENTRADA_PAGA", "DATA_ENTRADA_PAGA"),
-    "aguardando-retirada": ("USER_RETIRADA", "DATA_RETIRADA"),
-    "entregue": ("USER_ENTREGUE", "DATA_ENTREGUE"),
-    "Digitalizado": ("USER_ETQ_ASSINATURA_DIRETOR", "DT_ETQ_ASSINATURA_DIRETOR"),
-    "Pagamento-OK": ("USER_ETQ_ENTREGUE", "DT_ETQ_ENTREGUE"),
-    "Carne-Gerado": ("USER_ETQ_ENTRADA_PAGA", "DT_ETQ_ENTRADA_PAGA"),
-    "Autenticado": ("USER_ETQ_RETIRADA", "DT_ETQ_RETIRADA"),
-    "Fisico":  ("USER_ASSINATURA_DIRETOR", "DATA_ASSINATURA_DIRETOR"),
-    "Digital": ("USER_CONTRATO_DIGITAL", "DATA_CONTRATO_DIGITAL"),
-    "Impresso": ("USER_IMPRESSO", "DATA_IMPRESSO"),
-}
-
 def atualizar_carne():
     boleto = atualizar_vendas()
     clientes = [(row['cliente'].split()[0], row['id_lote']) for row in boleto]
@@ -112,6 +99,7 @@ def query_base():
     selecao  = (
         ''' concat(c.codcli, " - ", c.razao) as cliente,
             c.codcli, 
+            c.razao,
             c.rca,
             lv2.nome AS nome_usuario,
             autenticado.nome AS nome_autenticado,
@@ -122,6 +110,7 @@ def query_base():
             fisico.nome AS nome_fisico,
             digital.nome AS nome_digital,
             impresso.nome AS nome_impresso,
+            consulta.nome AS nome_consulta,
             le.fantasia,
             lv.nome AS nome_vendedor, 
             c.dtcadastro,
@@ -150,6 +139,8 @@ def query_base():
             ON lcc.USER_CONTRATO_DIGITAL = digital.login
         LEFT JOIN lot_vendedores impresso 
             ON lcc.USER_IMPRESSO = impresso.login
+        LEFT JOIN lot_vendedores consulta 
+            ON lcc.USER_CONSULTA_SPC = consulta.login
         LEFT JOIN lot_vendedores autenticado 
             ON lcc.USER_ETQ_RETIRADA = autenticado.login''')
 
@@ -185,7 +176,7 @@ def atualizar_vendas():
                     OR lcc.OBS = ''
                     OR CHAR_LENGTH(TRIM(lcc.OBS)) < 8)
             )
-        GROUP BY c.CODCLI, ll.id
+        GROUP BY c.CODCLI, ll.id, lcc.TIPO_ESPECIAL 
         ORDER BY ll.DATA_COMPRA ASC '''
     consulta = executar_query(query)
     resultado = contratos(consulta)
@@ -256,7 +247,6 @@ def atualizar_coluna(set_parts, params, id_lote):
 
     params.append(id_lote)
     linha = executar_query(query, tuple(params))
-
     return linha > 0
 
 def finalizados():
@@ -290,7 +280,7 @@ def criar_contrato(tipo, id_lote, codcli, usuario):
         VALUES (%s, %s, %s, %s, NOW())
     ''')
 
-    params = (tipo, id_lote, codcli, usuario)
+    params = (id_lote, codcli, tipo, usuario)
     resultado = executar_query(query, params)
 
     return resultado > 0
@@ -302,7 +292,8 @@ def contratos(consulta):
            'id': i['ID'],
            'id_lote': i['ID_LOTE'],
            'lote': None,
-           'cliente': i['cliente'],
+           'cliente': i['cliente'].rstrip(),
+           'cliente_abreviado': f'{i['codcli']} - {nome_abreviado(i['razao'], 20, i['parte'])}',
            'tipo_contrato': i['TIPO_ESPECIAL'],
            'entrada': 0.00,
            'fantasia': i['fantasia'],
@@ -344,7 +335,7 @@ def contratos(consulta):
                 }
 
         if i.get('USER_ETQ_ASSINATURA_DIRETOR'):
-            resultados['badges']['Digitalizado'] = {
+            resultados['badges']['Arquivado'] = {
                     'user': f"{i['USER_ETQ_ASSINATURA_DIRETOR']} - {i['nome_digitalizado']}",
                     'data': i['DT_ETQ_ASSINATURA_DIRETOR']
                 }
@@ -384,7 +375,40 @@ def contratos(consulta):
                         'user': f"{i['USER_CONTRATO_DIGITAL']} - {i['nome_digital']}",
                         'data': i['DATA_CONTRATO_DIGITAL'] 
         }    
+            
+        if i.get('USER_CONSULTA_SPC'):
+            resultados['badges']['consulta-spc'] = {
+                        'user': f"{i['USER_CONSULTA_SPC']} - {i['nome_consulta']}",
+                        'data': i['DATA_CONSULTA_SPC'] 
+        } 
                        
         resultado.append(resultados)
     
     return resultado
+
+
+def nome_abreviado(texto, limite, parte):
+    if parte != 0:
+        limite = limite - 2
+
+    nome = texto.rstrip()
+
+    if len(texto) >= limite:
+        nome = nome.split()
+
+
+        primeiro_nome = nome[0]
+        ultimo_nome = nome[-1]
+        abreviado = [primeiro_nome]
+        meio = nome[1:-1]
+
+        for p in meio:
+            abreviado.append(p[0] + '.')
+        abreviado.append(ultimo_nome)
+    
+    resultado = " ".join(abreviado)
+
+    if len(resultado) <= limite:
+        return resultado
+
+    return resultado[:limite-1].rstrip()

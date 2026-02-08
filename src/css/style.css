@@ -71,7 +71,7 @@ body{
 .kanban-cards{
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 10px;
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -108,8 +108,17 @@ body{
     width: 230px;
 }
 
-.badge.Digitalizado{
+.badge.Arquivado{
     background-color: #09ff00;
+    color: rgb(0, 0, 0);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge.consulta-spc{
+    background-color: #c800ff;
     font-size: 11px;
     display: flex;
     align-items: center;
@@ -575,4 +584,14 @@ dialog{
 
 #create-special-submit:disabled {
     background-color: #999;
+}
+
+.kanban-card.spc-pendente {
+  background-color: #ffe5e5;
+}
+
+.modal-assinatura {
+  width: 700px;
+  max-width: 1000px;
+  background-color: #ffffff;
 }

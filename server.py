@@ -8,7 +8,23 @@ logging.basicConfig(level=logging.DEBUG)
 app = Flask(__name__)
 app.json.sort_keys = False
 app.json.ensure_ascii = False
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+
+etapas = {
+    "assinado-cliente": ("USER_ENTRADA_PAGA", "DATA_ENTRADA_PAGA"),
+    "aguardando-retirada": ("USER_RETIRADA", "DATA_RETIRADA"),
+    "entregue": ("USER_ENTREGUE", "DATA_ENTREGUE"),
+    "Digitalizado": ("USER_ETQ_ASSINATURA_DIRETOR", "DT_ETQ_ASSINATURA_DIRETOR"),
+    "Pagamento-OK": ("USER_ETQ_ENTREGUE", "DT_ETQ_ENTREGUE"),
+    "Carne-Gerado": ("USER_ETQ_ENTRADA_PAGA", "DT_ETQ_ENTRADA_PAGA"),
+    "Autenticado": ("USER_ETQ_RETIRADA", "DT_ETQ_RETIRADA"),
+    "contrato-fisico":  ("USER_ASSINATURA_DIRETOR", "DATA_ASSINATURA_DIRETOR"),
+    "contrato-digital": ("USER_CONTRATO_DIGITAL", "DATA_CONTRATO_DIGITAL"),
+    "Impresso": ("USER_IMPRESSO", "DATA_IMPRESSO"),
+    "consulta-spc": ("USER_CONSULTA_SPC", "DATA_CONSULTA_SPC"),
+}
+
 
 '''
 TOKEN_LEEWAY = 60
@@ -132,7 +148,10 @@ def atualizar_kanban():
 
     resultado = atualizar_coluna(set_parts, params, id_lote)
 
-    return resultado > 0
+    if resultado > 0:
+        return jsonify({"success": True}), 200
+    else:
+        return jsonify({"error": "Nenhuma linha atualizada"}), 400
 
 @app.route('/entregues/finalizados')
 #@require_auth
@@ -164,12 +183,12 @@ def salvar_observacao():
         dados = request.json
 
         id_kanban = dados.get("id_lote")
-        observacao = dados.get("observacao", "").strip()
+        texto_obs = dados.get("observacao", "").strip()
 
         if not id_kanban:
             return jsonify({"error": "id_lote não informado"}), 400
 
-        observacao(observacao, id_kanban)
+        observacao(texto_obs, id_kanban)
 
         return jsonify({
             "status": "ok",
