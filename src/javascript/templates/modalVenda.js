@@ -30,14 +30,29 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                       disabled>
               </div>
 
+              <div class="input-group">
+                <label for="email">
+                    Consulta SPC:
+                </label>
+                <input
+                      placeholder="${
+                        venda.badges?.['consulta-spc']
+                          ? `${venda.badges?.['consulta-spc'].user || ''} Data: ${
+                              venda.badges?.['consulta-spc'].data
+                                ? formatarData(venda.badges?.['consulta-spc'].data) + ' ' +
+                                  formatarhorario(venda.badges?.['consulta-spc'].data)
+                                : ''
+                            }`
+                          : ''
+                      }"
+                      disabled>
+              </div>
 
               <div class="input-group">
                 <label for="email">
                     Autenticação:
                 </label>
                 <input
-                      id="email", 
-                      name="email" 
                       placeholder="${
                         venda.badges?.Autenticado
                           ? `${venda.badges.Autenticado.user || ''} Data: ${
@@ -56,8 +71,6 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                       Confirmação de Pagamento:
                   </label>
                   <input
-                        id="email", 
-                        name="email" 
                         placeholder="${
                           venda.badges?.['Pagamento-OK']
                             ? `${venda.badges?.['Pagamento-OK'].user || ''} Data: ${
@@ -93,17 +106,15 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
 
               <div class="input-group">
                   <label for="email">
-                      Digitalização:
+                      Arquivamento:
                   </label>
                   <input
-                        id="email", 
-                        name="email" 
                         placeholder="${
-                          venda.badges?.Digitalizado
-                            ? `${venda.badges.Digitalizado.user || ''} Data: ${
-                                venda.badges.Digitalizado.data
-                                  ? formatarData(venda.badges.Digitalizado.data) + ' ' +
-                                    formatarhorario(venda.badges.Digitalizado.data)
+                          venda.badges?.Arquivado
+                            ? `${venda.badges.Arquivado.user || ''} Data: ${
+                                venda.badges.Arquivado.data
+                                  ? formatarData(venda.badges.Arquivado.data) + ' ' +
+                                    formatarhorario(venda.badges.Arquivado.data)
                                   : ''
                               }`
                             : ''
@@ -116,8 +127,6 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                       Impressão:
                   </label>
                   <input
-                        id="email", 
-                        name="email" 
                         placeholder="${
                           venda.badges?.Impresso
                             ? `${venda.badges.Impresso.user || ''} Data: ${
@@ -137,8 +146,6 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
                       Entregue:
                   </label>
                   <input
-                        id="email", 
-                        name="email" 
                         placeholder="${
                           venda.colunas?.entregue
                             ? `${venda.colunas?.entregue.user || ''} Data: ${

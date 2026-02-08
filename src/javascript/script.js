@@ -9,7 +9,7 @@ const API_BASE = location.hostname.startsWith('192.168.') || location.hostname =
 
 const USUARIO_ID = document.getElementById('txtLogin').value;
 */
-const API_BASE = 'http://192.168.2.63:5010';
+const API_BASE = 'http://127.0.0.1:5010';
 
 const USUARIO_ID = 40
 
@@ -166,7 +166,7 @@ function modalstatus() {
 
       try {
         await registrarEtiquetaNoServidor({ etiqueta: etapa, usuario: USUARIO_ID, id_lote });
-        cloned.onclick = badge.onclick;
+        cloned.onclick = badgeEl.onclick;
         location.reload();
       } catch (err) {
         cloned.remove();
@@ -526,6 +526,10 @@ function puxarvendas() {
         if (venda.dt_compra) card.dataset.dataVenda = venda.dt_compra;
         
         card.innerHTML = window.templateCardVenda(venda, descricao);
+        
+        const spcVal = (venda.badges?.['consulta-spc'] ?? '').toString().trim();
+        if (!spcVal) card.classList.add('spc-pendente');
+
 
         const badge_status = document.createElement('div');
 
@@ -534,21 +538,24 @@ function puxarvendas() {
             <div class="badge Autenticado"><span>Autenticado</span></div>
             <div class="badge Pagamento-OK"><span>Pagamento OK</span></div>
             <div class="badge Carne-Gerado"><span>Carnê Gerado</span></div>
-            <div class="badge Digitalizado"><span>Digitalizado</span></div>
+            <div class="badge Arquivado"><span>Arquivado</span></div>
             <div class="badge contrato-fisico"><span>Fisico</span></div>
             <div class="badge contrato-digital"><span>Digital</span></div>
             <div class="badge Impresso"><span>Impresso</span></div>
+            <div class="badge consulta-spc"><span>Consulta SPC</span></div>
           </div>`;
 
         const modal = document.createElement('dialog');
+        
         modal.id = `modal-${venda.id}`;
         modal.innerHTML = window.templateModalVenda(
           venda,
           formatarData,
           formatarhorario
         );
-        
+
         modal.appendChild(badge_status);
+
 
         if (venda.tipo_contrato === 'D') {
           const carneBtn = modal.querySelector('.modal-status .badge.Carne-Gerado');
@@ -589,7 +596,12 @@ function puxarvendas() {
 
         kanban.appendChild(card);
         document.body.appendChild(modal);
+
         carregarbadges(venda)
+
+        const thisBtn = card.querySelector(`.badge-cards .badge.consulta-spc`);
+        if (thisBtn) thisBtn.remove();
+
       });
 
       
@@ -641,6 +653,7 @@ function carregarbadges(venda){
           const entradaBadge = badgeContainer.querySelector('.badge.Entrada-Confirmada');
           if (entradaBadge) entradaBadge.remove();
         }
+
 
         if (modal) {
           // 1) etapas normais: remove do modal
@@ -747,7 +760,6 @@ function criarCardBasico(venda) {
         if (tipoVal === '') {
             tipoVal = 'V';
         }
-        
         
         const tipoEspecial = `[${tipoVal}] `; 
         
