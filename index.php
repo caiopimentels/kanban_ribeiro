@@ -67,114 +67,97 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
     <h5>Usuário: <?#php echo $_SESSION['login']." - ".$_SESSION['nome'];?> | <a href='/sislote/'>HOME</a></h5>
     <input type="hidden" id="txtLogin" name="txtLogin" value="<?php echo $_SESSION['login']; ?>">
     </div>
-    <div class="kanban-wrapper">
-        <div class="global-filter-bar">
-            <input type="text" id="filtro-busca" placeholder="Buscar cliente ou lote">
 
-            <select id="filtro-corretor-global"></select>
-            <select id="filtro-empreendimento-global"></select>
+    <div class="kanban">
+        <!--Coluna 3-->
+        <div class="kanban-column" id="lotes-bloqueados">
+            <div class="kanban-title">
+                <h2>
+                    Bloqueados
+                </h2>
 
-            <input type="date" id="filtro-data-inicio-global">
-            <input type="date" id="filtro-data-fim-global">
+                <button class="add-card">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                
+            </div>
+            <div class="kanban-cards">
 
-            <label>
-                <input type="checkbox" id="filtro-finalizados-global">
-                Mostrar finalizados
-            </label>
+            </div>
+        </div> 
 
-            <button id="btn-limpar-filtro">Limpar</button>
+
+        <!--Coluna 1-->
+        <div class="kanban-column" id="contrato-gerado">
+            <div class="kanban-title">
+                <h2>Contrato Gerado </h2>
+
+                <button class="add-card">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+
+                <button class="add-card create-card-btn" title="Criar Contrato Especial">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+
+            </div>
+            <div class="kanban-cards">
+                </div>
         </div>
 
-        <div class="kanban">
-            <!--Coluna 3-->
-            <div class="kanban-column" id="lotes-bloqueados">
-                <div class="kanban-title">
-                    <h2>
-                        Bloqueados
-                    </h2>
+        <!--Coluna 2-->
+        <div class="kanban-column" id="assinado-cliente">
+            <div class="kanban-title">
+                <h2>
+                    Assinado Cliente
+                </h2>
 
-                    <button class="add-card">
-                        <i class="fa-solid fa-filter"></i>
-                    </button>
-                    
-                </div>
-                <div class="kanban-cards">
-
-                </div>
-            </div> 
-
-
-            <!--Coluna 1-->
-            <div class="kanban-column" id="contrato-gerado">
-                <div class="kanban-title">
-                    <h2>Contrato Gerado </h2>
-
-                    <button class="add-card">
-                        <i class="fa-solid fa-filter"></i>
-                    </button>
-
-                    <button class="add-card create-card-btn" title="Criar Contrato Especial">
-                        <i class="fa-solid fa-plus"></i>
-                    </button>
-
-                </div>
-                <div class="kanban-cards">
-                    </div>
+                <button class="add-card">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                
             </div>
+            <div class="kanban-cards">
 
-            <!--Coluna 2-->
-            <div class="kanban-column" id="assinado-cliente">
-                <div class="kanban-title">
-                    <h2>
-                        Assinado Cliente
-                    </h2>
-
-                    <button class="add-card">
-                        <i class="fa-solid fa-filter"></i>
-                    </button>
-                    
-                </div>
-                <div class="kanban-cards">
-
-                </div>
             </div>
-
-            <!--Coluna 4-->
-            <div class="kanban-column" id="aguardando-retirada">
-                <div class="kanban-title">
-                    <h2>
-                        Aguardando Retirada
-                    </h2>
-
-                    <button class="add-card">
-                        <i class="fa-solid fa-filter"></i>
-                    </button>
-                    
-                </div>
-                <div class="kanban-cards">
-
-                </div>
-            </div> 
-
-            <!--Coluna 5-->
-            <div class="kanban-column" id="entregue">
-                <div class="kanban-title">
-                    <h2>
-                        Entregue
-                    </h2>
-
-                    <button class="add-card" data-coluna="entregue">
-                        <i class="fa-solid fa-filter"></i>
-                    </button>
-                    
-                </div>
-                <div class="kanban-cards">
-
-                </div>
-            </div> 
-
         </div>
+
+        <!--Coluna 4-->
+        <div class="kanban-column" id="aguardando-retirada">
+            <div class="kanban-title">
+                <h2>
+                    Aguardando Retirada
+                </h2>
+
+                <button class="add-card">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                
+            </div>
+            <div class="kanban-cards">
+
+            </div>
+        </div> 
+
+        <!--Coluna 5-->
+        <div class="kanban-column" id="entregue">
+            <div class="kanban-title">
+                <h2>
+                    Entregue
+                </h2>
+
+                <button class="add-card" data-coluna="entregue">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+                
+            </div>
+            <div class="kanban-cards">
+
+            </div>
+        </div> 
+
     </div>
+
 
 
 

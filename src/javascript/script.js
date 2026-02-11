@@ -813,10 +813,9 @@ function renderizarEntreguesFinalizados(listaVendasFinalizadas) {
     }
 
     container.appendChild(card);
-    carregarbadges(venda)
     const thisBtn = card.querySelector(`.badge-cards .badge.consulta-spc`);
     if (thisBtn) thisBtn.remove();
-
+    carregarbadges(venda)
   });
   
 

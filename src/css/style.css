@@ -587,54 +587,11 @@ dialog{
 }
 
 .kanban-card.spc-pendente {
-  background-color: #ffe5e5;
+  background-color: #ffbbbb;
 }
 
 .modal-assinatura {
   width: 700px;
   max-width: 1000px;
   background-color: #ffffff;
-}
-
-.global-filter-bar {
-  background: #0f172a;
-  padding: 14px 20px;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  border-bottom: 3px solid #16a34a;
-  border-radius: 12px;
-}
-
-.global-filter-bar input,
-.global-filter-bar select {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-}
-
-.global-filter-bar button {
-  background: #16a34a;
-  color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.kanban-wrapper {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.global-filter-bar {
-  width: 100%;
-  box-sizing: border-box;
-  margin-bottom: 20px;
-}
-
-.kanban {
-  display: flex;
-  gap: 20px;
 }
