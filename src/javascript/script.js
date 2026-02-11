@@ -2,16 +2,11 @@ document.addEventListener('DOMContentLoaded', () => {
   puxarvendas();
 });
 
-/*
 const API_BASE = location.hostname.startsWith('192.168.') || location.hostname === '10.10.10.5'
   ? 'http://192.168.1.5:5010' 
   : 'http://madribeiro.ddns.net:5010';
 
 const USUARIO_ID = document.getElementById('txtLogin').value;
-*/
-const API_BASE = 'http://127.0.0.1:5010';
-
-const USUARIO_ID = 40
 
 const colunas = [
   { id: 'lotes-bloqueados',     nome: 'Bloqueados' },
@@ -813,9 +808,9 @@ function renderizarEntreguesFinalizados(listaVendasFinalizadas) {
     }
 
     container.appendChild(card);
+    carregarbadges(venda)
     const thisBtn = card.querySelector(`.badge-cards .badge.consulta-spc`);
     if (thisBtn) thisBtn.remove();
-    carregarbadges(venda)
   });
   
 

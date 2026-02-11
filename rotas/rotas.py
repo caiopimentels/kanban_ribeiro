@@ -268,6 +268,8 @@ def finalizados():
         	and lll.SITUACAO = 'V'
         {colunas}
         where lcc.DATA_ENTREGUE is not null 
+        GROUP BY c.CODCLI, ll.id, lcc.TIPO_ESPECIAL
+        ORDER BY ll.DATA_COMPRA DESC
         '''
     consulta = executar_query(query)
     resultado = contratos(consulta)

@@ -1,7 +1,9 @@
 <?php
-#session_start();
-#$id_rotina = "55";
-#require "../securety.php";
+session_start();
+$id_rotina = "55";
+require "securety.php";
+$userId      = $_SESSION['login'];
+$userName    = $_SESSION['nome'];
 
 function loadEnv($path)
 {
@@ -48,8 +50,6 @@ function gerarTokenKanban($userId, $secret, $ttlSegundos = 1800) {
     return base64url_encode($payload) . '.' . base64url_encode($sig);
 }
 
-#$userId      = $_SESSION['login'];
-$userId      = 40;
 $tokenKanban = gerarTokenKanban($userId, $secret);
 ?>
 <!DOCTYPE html>
@@ -64,7 +64,7 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
 <body>
     <div>
     <div style="width:100%;text-align: center;">
-    <h5>Usuário: <?#php echo $_SESSION['login']." - ".$_SESSION['nome'];?> | <a href='/sislote/'>HOME</a></h5>
+    <h5>Usuário: <?php echo $userId ." - ".$userName;?>   |   <a href='/sislote/'>HOME</a></h5>
     <input type="hidden" id="txtLogin" name="txtLogin" value="<?php echo $_SESSION['login']; ?>">
     </div>
 
