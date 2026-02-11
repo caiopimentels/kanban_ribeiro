@@ -389,26 +389,28 @@ def contratos(consulta):
 
 def nome_abreviado(texto, limite, parte):
     if parte != 0:
-        limite = limite - 2
+        limite -= 2
 
-    nome = texto.rstrip()
+    nome = (texto or "").strip()
 
-    if len(texto) >= limite:
-        nome = nome.split()
+    if len(nome) <= limite:
+        return nome
 
+    partes = nome.split()
+    if not partes:
+        return ""
 
-        primeiro_nome = nome[0]
-        ultimo_nome = nome[-1]
-        abreviado = [primeiro_nome]
-        meio = nome[1:-1]
+    if len(partes) == 1:
+        return partes[0][:limite].rstrip()
 
-        for p in meio:
-            abreviado.append(p[0] + '.')
-        abreviado.append(ultimo_nome)
-    
+    primeiro = partes[0]
+    ultimo = partes[-1]
+    meio = partes[1:-1]
+
+    abreviado = [primeiro] + [p[0] + "." for p in meio if p] + [ultimo]
     resultado = " ".join(abreviado)
 
     if len(resultado) <= limite:
         return resultado
 
-    return resultado[:limite-1].rstrip()
+    return resultado[:limite].rstrip()

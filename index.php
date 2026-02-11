@@ -1,13 +1,40 @@
 <?php
-session_start();
-$id_rotina = "55";
-require "securety.php";
+#session_start();
+#$id_rotina = "55";
+#require "../securety.php";
 
-$secretPath = __DIR__ . "/kanban_secret.key";
-if (!file_exists($secretPath)) {
-    die("Arquivo de secret NÃO encontrado em: " . $secretPath);
+function loadEnv($path)
+{
+    if (!file_exists($path)) {
+        die(".env não encontrado");
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach ($lines as $line) {
+
+        // Ignora comentários
+        if (strpos(trim($line), '#') === 0) {
+            continue;
+        }
+
+        if (!strpos($line, '=')) {
+            continue;
+        }
+
+        list($name, $value) = explode('=', $line, 2);
+
+        $name = trim($name);
+        $value = trim($value);
+
+        $_ENV[$name] = $value;
+        putenv("$name=$value");
+    }
 }
-$secret = trim(file_get_contents($secretPath));
+
+loadEnv(__DIR__ . '/.env');
+
+$secret = getenv('SECRET_PATH');
 
 function base64url_encode($data) {
     return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
@@ -21,7 +48,8 @@ function gerarTokenKanban($userId, $secret, $ttlSegundos = 1800) {
     return base64url_encode($payload) . '.' . base64url_encode($sig);
 }
 
-$userId      = $_SESSION['login'];
+#$userId      = $_SESSION['login'];
+$userId      = 40;
 $tokenKanban = gerarTokenKanban($userId, $secret);
 ?>
 <!DOCTYPE html>
@@ -36,99 +64,119 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
 <body>
     <div>
     <div style="width:100%;text-align: center;">
-    <h5><?php echo $_SESSION['login']." - ".$_SESSION['nome'];?> | <a href='/sislote/'>HOME</a></h5>
+    <h5>Usuário: <?#php echo $_SESSION['login']." - ".$_SESSION['nome'];?> | <a href='/sislote/'>HOME</a></h5>
     <input type="hidden" id="txtLogin" name="txtLogin" value="<?php echo $_SESSION['login']; ?>">
     </div>
+    <div class="kanban-wrapper">
+        <div class="global-filter-bar">
+            <input type="text" id="filtro-busca" placeholder="Buscar cliente ou lote">
 
-    <main class="kanban">
-        <!--Coluna 3-->
-        <div class="kanban-column" id="lotes-bloqueados">
-            <div class="kanban-title">
-                <h2>
-                    Bloqueados
-                </h2>
+            <select id="filtro-corretor-global"></select>
+            <select id="filtro-empreendimento-global"></select>
 
-                <button class="add-card">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
-                
-            </div>
-            <div class="kanban-cards">
+            <input type="date" id="filtro-data-inicio-global">
+            <input type="date" id="filtro-data-fim-global">
 
-            </div>
-        </div> 
+            <label>
+                <input type="checkbox" id="filtro-finalizados-global">
+                Mostrar finalizados
+            </label>
 
+            <button id="btn-limpar-filtro">Limpar</button>
+        </div>
 
-        <!--Coluna 1-->
-        <div class="kanban-column" id="contrato-gerado">
-            <div class="kanban-title">
-                <h2>Contrato Gerado </h2>
+        <div class="kanban">
+            <!--Coluna 3-->
+            <div class="kanban-column" id="lotes-bloqueados">
+                <div class="kanban-title">
+                    <h2>
+                        Bloqueados
+                    </h2>
 
-                <button class="add-card">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
-
-                <button class="add-card create-card-btn" title="Criar Contrato Especial">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-
-            </div>
-            <div class="kanban-cards">
+                    <button class="add-card">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                    
                 </div>
+                <div class="kanban-cards">
+
+                </div>
+            </div> 
+
+
+            <!--Coluna 1-->
+            <div class="kanban-column" id="contrato-gerado">
+                <div class="kanban-title">
+                    <h2>Contrato Gerado </h2>
+
+                    <button class="add-card">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+
+                    <button class="add-card create-card-btn" title="Criar Contrato Especial">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+
+                </div>
+                <div class="kanban-cards">
+                    </div>
+            </div>
+
+            <!--Coluna 2-->
+            <div class="kanban-column" id="assinado-cliente">
+                <div class="kanban-title">
+                    <h2>
+                        Assinado Cliente
+                    </h2>
+
+                    <button class="add-card">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                    
+                </div>
+                <div class="kanban-cards">
+
+                </div>
+            </div>
+
+            <!--Coluna 4-->
+            <div class="kanban-column" id="aguardando-retirada">
+                <div class="kanban-title">
+                    <h2>
+                        Aguardando Retirada
+                    </h2>
+
+                    <button class="add-card">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                    
+                </div>
+                <div class="kanban-cards">
+
+                </div>
+            </div> 
+
+            <!--Coluna 5-->
+            <div class="kanban-column" id="entregue">
+                <div class="kanban-title">
+                    <h2>
+                        Entregue
+                    </h2>
+
+                    <button class="add-card" data-coluna="entregue">
+                        <i class="fa-solid fa-filter"></i>
+                    </button>
+                    
+                </div>
+                <div class="kanban-cards">
+
+                </div>
+            </div> 
+
         </div>
+    </div>
 
-        <!--Coluna 2-->
-        <div class="kanban-column" id="assinado-cliente">
-            <div class="kanban-title">
-                <h2>
-                    Assinado Cliente
-                </h2>
 
-                <button class="add-card">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
-                
-            </div>
-            <div class="kanban-cards">
-
-            </div>
-        </div>
-
-        <!--Coluna 4-->
-        <div class="kanban-column" id="aguardando-retirada">
-            <div class="kanban-title">
-                <h2>
-                    Aguardando Retirada
-                </h2>
-
-                <button class="add-card">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
-                
-            </div>
-            <div class="kanban-cards">
-
-            </div>
-        </div> 
-
-        <!--Coluna 5-->
-        <div class="kanban-column" id="entregue">
-            <div class="kanban-title">
-                <h2>
-                    Entregue
-                </h2>
-
-                <button class="add-card" data-coluna="entregue">
-                    <i class="fa-solid fa-filter"></i>
-                </button>
-                
-            </div>
-            <div class="kanban-cards">
-
-            </div>
-        </div> 
-
-    </main>
 
     <dialog id="filtro-modal" class="filtro-modal">
         <button class="close-modal" data-modal="filtro-modal" type="button">
@@ -212,9 +260,9 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
     <script>
         window.KANBAN_TOKEN = "<?= htmlspecialchars($tokenKanban, ENT_QUOTES, 'UTF-8') ?>";
     </script>
-    <script 
-        src="src/javascript/script.js">
-    </script>
+    <script src="../src/javascript/templates/cardVenda.js"></script>
+    <script src="../src/javascript/templates/modalVenda.js"></script>
+    <script src="../src/javascript/script.js"></script>
     </div>
 </body>
 </html>

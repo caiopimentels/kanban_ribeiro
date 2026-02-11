@@ -12,13 +12,12 @@ body{
     display: flex;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(90deg, #aeffab, #fde493);
+    background:  #16a34a;
 }
 
 .kanban{
     display: flex;
     gap: 14px;
-    padding: 24px;
     width: 100%;
     height: 90vh;
     overflow-x: auto;
@@ -30,13 +29,14 @@ body{
     gap: 18px;
     height: 100%;
     overflow-y: auto;
-    background-color: #f6f8fc;
-    border-radius: 12px;
-    box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
     padding: 12px;
     overflow: hidden;
     position: relative;
     width: 270px;
+
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    border-radius: 12px;
 }
 
 .kanban-column::after{
@@ -594,4 +594,47 @@ dialog{
   width: 700px;
   max-width: 1000px;
   background-color: #ffffff;
+}
+
+.global-filter-bar {
+  background: #0f172a;
+  padding: 14px 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-bottom: 3px solid #16a34a;
+  border-radius: 12px;
+}
+
+.global-filter-bar input,
+.global-filter-bar select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+}
+
+.global-filter-bar button {
+  background: #16a34a;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kanban-wrapper {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.global-filter-bar {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 20px;
+}
+
+.kanban {
+  display: flex;
+  gap: 20px;
 }
