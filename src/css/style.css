@@ -8,11 +8,14 @@
 }
 
 body{
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background:  #16a34a;
+  min-height: 100dvh;          
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: #16a34a;
 }
 
 .kanban{
@@ -594,4 +597,15 @@ dialog{
   width: 700px;
   max-width: 1000px;
   background-color: #ffffff;
+}
+
+.kanban-card, .kanban-card * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; 
+}
+
+.kanban-card.dragging {
+  opacity: 0.8;
+  transform: scale(1.02);
 }

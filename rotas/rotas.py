@@ -1,6 +1,21 @@
 
 from db.conexao         import executar_query
 
+def etapas():
+    return {
+    "assinado-cliente": ("USER_ENTRADA_PAGA", "DATA_ENTRADA_PAGA"),
+    "aguardando-retirada": ("USER_RETIRADA", "DATA_RETIRADA"),
+    "entregue": ("USER_ENTREGUE", "DATA_ENTREGUE"),
+    "Digitalizado": ("USER_ETQ_ASSINATURA_DIRETOR", "DT_ETQ_ASSINATURA_DIRETOR"),
+    "Pagamento-OK": ("USER_ETQ_ENTREGUE", "DT_ETQ_ENTREGUE"),
+    "Carne-Gerado": ("USER_ETQ_ENTRADA_PAGA", "DT_ETQ_ENTRADA_PAGA"),
+    "Autenticado": ("USER_ETQ_RETIRADA", "DT_ETQ_RETIRADA"),
+    "contrato-fisico":  ("USER_ASSINATURA_DIRETOR", "DATA_ASSINATURA_DIRETOR"),
+    "contrato-digital": ("USER_CONTRATO_DIGITAL", "DATA_CONTRATO_DIGITAL"),
+    "Impresso": ("USER_IMPRESSO", "DATA_IMPRESSO"),
+    "consulta-spc": ("USER_CONSULTA_SPC", "DATA_CONSULTA_SPC"),
+}
+
 def atualizar_carne():
     boleto = atualizar_vendas()
     clientes = [(row['cliente'].split()[0], row['id_lote']) for row in boleto]
@@ -295,7 +310,7 @@ def contratos(consulta):
            'id_lote': i['ID_LOTE'],
            'lote': None,
            'cliente': i['cliente'].rstrip(),
-           'cliente_abreviado': f'{i['codcli']} - {nome_abreviado(i['razao'], 20, i['parte'])}',
+           'cliente_abreviado': f"{i['codcli']} - {nome_abreviado(i['razao'], 20, i['parte'])}",
            'tipo_contrato': i['TIPO_ESPECIAL'],
            'entrada': 0.00,
            'fantasia': i['fantasia'],
@@ -311,9 +326,9 @@ def contratos(consulta):
         }
 
         if i.get('parte') != 0 and i.get('parte'):
-            resultados['lote'] = f'{i['quadra']}-{i['lote']:02}/{i['parte']}'
+            resultados['lote'] = f"{i['quadra']}-{i['lote']:02}/{i['parte']}"
         else:
-            resultados['lote'] = f'{i['quadra']}-{i['lote']:02}'
+            resultados['lote'] = f"{i['quadra']}-{i['lote']:02}"
 
         if i.get('entrada') and i.get('TIPO_ESPECIAL') == 'V':
             resultados['entrada'] = i['entrada']

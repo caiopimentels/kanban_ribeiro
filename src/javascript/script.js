@@ -2,10 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
   puxarvendas();
 });
 
+/*
 const API_BASE = location.hostname.startsWith('192.168.') || location.hostname === '10.10.10.5'
   ? 'http://192.168.1.5:5010' 
   : 'http://madribeiro.ddns.net:5010';
-
+*/
+const API_BASE = 'http://192.168.2.63:5010';
 const USUARIO_ID = document.getElementById('txtLogin').value;
 
 const colunas = [
@@ -37,19 +39,28 @@ let colunaOrigemDoDrag = null;
 function handleDragStart(e){
   e.currentTarget.classList.add('dragging');
   colunaOrigemDoDrag = e.currentTarget.closest('.kanban-column')?.id || null;
+
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', e.currentTarget.getAttribute('id_lote') || '1');
+  }
 }
 function handleDragEnd(e){
   e.currentTarget.classList.remove('dragging');
   colunaOrigemDoDrag = null;
-  location.reload();
   atualizarContagem();
 }
 
-function handleDragOver(e)  { e.preventDefault(); e.currentTarget.classList.add('cards-hover'); }
+function handleDragOver(e)  { 
+  e.preventDefault(); 
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('cards-hover');
+}
 function handleDragLeave(e) { e.currentTarget.classList.remove('cards-hover'); }
 
 async function handleDrop(e){
   e.currentTarget.classList.remove('cards-hover');
+
   const dragCard = document.querySelector('.kanban-card.dragging');
   if(!dragCard) return;
 
@@ -57,36 +68,173 @@ async function handleDrop(e){
   const id_lote = dragCard.getAttribute('id_lote');
   if(!colunaDestino || !id_lote) return;
 
+  const origemId = colunaOrigemDoDrag || dragCard.closest('.kanban-column')?.id;
+  const origemContainer = origemId ? document.querySelector(`#${origemId} .kanban-cards`) : null;
+
   e.currentTarget.appendChild(dragCard);
 
   try{
-    const voltar = colunaOrigemDoDrag && idxCol(colunaDestino) < idxCol(colunaOrigemDoDrag);
+    const voltar = origemId && idxCol(colunaDestino) < idxCol(origemId);
     if (voltar) {
       const etapas = etapasAFrenteDo(colunaDestino);
       if (etapas.length) {
         await limparFrenteNoServidor({ usuario: USUARIO_ID, id_lote, etapas });
       }
     }
-    await atualizarEtapaNoServidor({ etapa: colunaDestino, usuario: USUARIO_ID, id_lote });
-  } catch(err) {
 
+    await atualizarEtapaNoServidor({ etapa: colunaDestino, usuario: USUARIO_ID, id_lote });
+
+  } catch(err) {
+    console.error('Falha ao mover. Voltando...', err);
+    if (origemContainer) origemContainer.appendChild(dragCard);
+    alert('Não foi possível mover o contrato. Verifique a conexão e tente novamente.');
   } finally {
     atualizarContagem();
   }
 }
 
-
 function adicionarListenersCards() {
+  const isTouch = window.matchMedia('(pointer: coarse)').matches;
   document.querySelectorAll('.kanban-card').forEach(card => {
     card.removeEventListener('dragstart', handleDragStart);
     card.removeEventListener('dragend', handleDragEnd);
     card.addEventListener('dragstart', handleDragStart);
     card.addEventListener('dragend', handleDragEnd);
+    
+    if (isTouch) habilitarDragTouch(card);
 
     card.removeEventListener('click', abrirModal);
     card.addEventListener('click', abrirModal);
   });
 }
+
+let dragCardTouch = null;
+let colunaOrigemTouch = null;
+
+function habilitarDragTouch(card) {
+  card.style.touchAction = "pan-y";
+
+  const HOLD_MS = 250;
+  const MOVE_TOL = 10;
+
+  let holdTimer = null;
+  let startX = 0, startY = 0;
+  let dragging = false;
+
+  const limparHold = () => {
+    if (holdTimer) clearTimeout(holdTimer);
+    holdTimer = null;
+  };
+
+  card.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "touch") return;
+
+    dragging = false;
+    dragCardTouch = null;
+
+    startX = e.clientX;
+    startY = e.clientY;
+
+    // só começa a arrastar se segurar por HOLD_MS
+    limparHold();
+    holdTimer = setTimeout(() => {
+      dragging = true;
+      dragCardTouch = card;
+      colunaOrigemTouch = card.closest(".kanban-column")?.id || null;
+
+      card.classList.add("dragging");
+
+      // a partir daqui, a intenção é arrastar
+      // (não dá pra setar preventDefault retroativo, então a gente bloqueia nos moves)
+    }, HOLD_MS);
+  }, { passive: true });
+
+  card.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "touch") return;
+
+    // Se ainda não virou drag, e o usuário moveu muito -> era scroll, cancela hold
+    if (!dragging) {
+      const dx = Math.abs(e.clientX - startX);
+      const dy = Math.abs(e.clientY - startY);
+      if (dx > MOVE_TOL || dy > MOVE_TOL) {
+        limparHold();
+      }
+      return; // deixa rolar normal
+    }
+
+    // Já estamos arrastando -> aqui sim bloqueia o scroll
+    e.preventDefault();
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const coluna = el?.closest(".kanban-cards");
+
+    document.querySelectorAll(".kanban-cards").forEach(c =>
+      c.classList.remove("cards-hover")
+    );
+
+    if (coluna) coluna.classList.add("cards-hover");
+  }, { passive: false });
+
+  async function finalizarDrag(e) {
+    if (e.pointerType !== "touch") return;
+
+    if (!dragging) {
+      limparHold();
+      return;
+    }
+
+    e.preventDefault();
+    limparHold();
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const coluna = el?.closest(".kanban-cards");
+
+    card.classList.remove("dragging");
+    document.querySelectorAll(".kanban-cards").forEach(c =>
+      c.classList.remove("cards-hover")
+    );
+
+    if (coluna) {
+      const colunaDestino = coluna.closest(".kanban-column")?.id;
+      const id_lote = card.getAttribute("id_lote");
+      if (colunaDestino && id_lote) {
+        coluna.appendChild(card);
+
+        try {
+          const voltar =
+            colunaOrigemTouch && idxCol(colunaDestino) < idxCol(colunaOrigemTouch);
+
+          if (voltar) {
+            const etapas = etapasAFrenteDo(colunaDestino);
+            if (etapas.length) {
+              await limparFrenteNoServidor({ usuario: USUARIO_ID, id_lote, etapas });
+            }
+          }
+
+          await atualizarEtapaNoServidor({ etapa: colunaDestino, usuario: USUARIO_ID, id_lote });
+        } catch (err) {
+          console.error("Erro ao mover (touch):", err);
+        } finally {
+          atualizarContagem();
+        }
+      }
+    }
+
+    dragging = false;
+    dragCardTouch = null;
+    colunaOrigemTouch = null;
+  }
+
+  card.addEventListener("pointerup", finalizarDrag, { passive: false });
+  card.addEventListener("pointercancel", (e) => {
+    limparHold();
+    card.classList.remove("dragging");
+    dragging = false;
+    dragCardTouch = null;
+    colunaOrigemTouch = null;
+  }, { passive: true });
+}
+
 function adicionarListenersColunas() {
   document.querySelectorAll('.kanban-cards').forEach(column => {
     column.removeEventListener('dragover', handleDragOver);
@@ -162,7 +310,7 @@ function modalstatus() {
       try {
         await registrarEtiquetaNoServidor({ etiqueta: etapa, usuario: USUARIO_ID, id_lote });
         cloned.onclick = badgeEl.onclick;
-        location.reload();
+        atualizarContagem();
       } catch (err) {
         cloned.remove();
         badgeEl.style.display = '';
@@ -468,6 +616,17 @@ function formatarhorario(dataIso) {
   const segundos = String(data.getUTCSeconds()).padStart(2, '0');
   return `${hora}:${minutos}:${segundos}`;
 }
+
+async function refreshBoard() {
+
+  document.querySelectorAll('.kanban .kanban-cards').forEach(c => c.innerHTML = '');
+  document.querySelectorAll('dialog[id^="modal-"]').forEach(d => d.remove());
+
+  await puxarvendas();
+  atualizarContagem();
+}
+
+
 
 function puxarvendas() {
   fetch(`${API_BASE}/vendas`,{
@@ -884,7 +1043,7 @@ ${String(info.lote).padStart(2, '0')}${info.parte ? '/' + info.parte : ''} no ${
 
             alert("Contrato especial criado com sucesso!");
             modal.close();
-            location.reload();
+            await refreshBoard();
 
         } catch (err) {
             alert("Erro: " + err.message);

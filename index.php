@@ -1,9 +1,11 @@
 <?php
 session_start();
-$id_rotina = "55";
-require "securety.php";
-$userId      = $_SESSION['login'];
-$userName    = $_SESSION['nome'];
+//$id_rotina = "55";
+//require "securety.php";
+//$userId      = $_SESSION['login'];
+//$userName    = $_SESSION['nome'];
+$userId      = 40;
+$userName    = 'Caio Gatao';
 
 function loadEnv($path)
 {
@@ -56,7 +58,7 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link rel="stylesheet" href="src/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <title>Kanban - Caio</title>
@@ -65,7 +67,7 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
     <div>
     <div style="width:100%;text-align: center;">
     <h5>Usuário: <?php echo $userId ." - ".$userName;?>   |   <a href='/sislote/'>HOME</a></h5>
-    <input type="hidden" id="txtLogin" name="txtLogin" value="<?php echo $_SESSION['login']; ?>">
+    <input type="hidden" id="txtLogin" name="txtLogin" value="<?php echo $userId; ?>">
     </div>
 
     <div class="kanban">
