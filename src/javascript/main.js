@@ -93,12 +93,7 @@ export function registrarCliquesGlobais() {
       if (modal) modal.showModal();
       return;
     }
-
-    // ✅ clique no card abre modal único (se você já não tem isso)
-    const card = ev.target.closest('.kanban-card');
-    if (card && card._venda) {
-      abrirModalVenda(card._venda, { finalizado: card.dataset.finalizado === '1' });
-    }
+    
   });
 }
 

@@ -62,6 +62,16 @@ export function criarCardVenda(venda, { finalizado = false } = {}) {
   const btnSPC = card.querySelector('.badge-cards .badge.consulta-spc');
   if (btnSPC) btnSPC.remove();
 
+  // ✅ marca finalizado no DOM
+  if (venda.__finalizado) {
+    card.dataset.finalizado = '1';
+  } else {
+    card.removeAttribute('data-finalizado');
+  }
+
+  // ✅ guarda a venda no card (modal usa isso)
+  card._venda = { ...venda, __finalizado: !!venda.__finalizado };
+  
   return card;
 }
 
@@ -116,11 +126,13 @@ export function atualizarContagem() {
  */
 export function renderizarVendas(vendas) {
   for (const venda of vendas) {
+    
     const colunaId = determinarColuna(venda);
     const container = document.querySelector(`#${colunaId} .kanban-cards`);
     if (!container) continue;
 
     container.appendChild(criarCardVenda(venda));
+    
   }
 }
 

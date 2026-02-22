@@ -46,7 +46,8 @@ function configurarObservacao(modal, venda) {
   const campo = modal.querySelector('.observacao-input');
   if (!campo) return;
 
-  const finalizado = modal.dataset.finalizado === '1';
+  const algumFinalizado = !!document.querySelector(`.kanban-card[id_lote="${venda.id}"][data-finalizado="1"]`);
+  const finalizado = modal.dataset.finalizado === '1' || algumFinalizado;
   if (finalizado) {
     campo.disabled = true;
     campo.classList.add('obs-bloqueada');
@@ -196,7 +197,15 @@ export function abrirModalVenda(venda, { finalizado = false } = {}) {
 
   // limpa e renderiza base
   modal.innerHTML = '';
-  if (finalizado) modal.dataset.finalizado = '1';
+  // ✅ Detecta finalizado pelo card (mais confiável que depender do parâmetro)
+  const card = document.querySelector(`.kanban-card[id_lote="${venda.id}"]`);
+
+  const ehFinalizado =
+    finalizado === true ||
+    venda.__finalizado === true ||
+    card?.dataset.finalizado === '1';
+
+  if (ehFinalizado) modal.dataset.finalizado = '1';
   else delete modal.dataset.finalizado;
 
   modal.innerHTML = window.templateModalVenda(venda, formatarData, formatarHorario);
