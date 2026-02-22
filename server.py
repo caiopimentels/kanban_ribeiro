@@ -95,13 +95,14 @@ def salvar_observacao():
         if not id_kanban:
             return jsonify({"error": "id_lote não informado"}), 400
 
-        observacao(texto_obs, id_kanban)
+        sucesso = observacao(texto_obs, id_kanban)
 
         return jsonify({
             "status": "ok",
             "mensagem": "Observação salva com sucesso",
             "id_lote": id_kanban,
-            "observacao": observacao
+            "observacao": texto_obs,
+            "atualizado": bool(sucesso)
         }), 200
 
     except Exception as e:
@@ -128,5 +129,5 @@ def criar_contrato_especial():
         return jsonify({"message": "Contrato especial criado com sucesso"}), 201
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=5010)
+    app.run(debug=True, host='0.0.0.0', port=5010)
 

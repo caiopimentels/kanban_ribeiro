@@ -247,7 +247,7 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
     </script>
     <script src="../src/javascript/templates/cardVenda.js"></script>
     <script src="../src/javascript/templates/modalVenda.js"></script>
-    <script src="../src/javascript/script.js"></script>
+    <script type="module" src="../src/javascript/main.js"></script>
     </div>
 </body>
 </html>

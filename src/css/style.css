@@ -612,12 +612,17 @@ dialog{
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none; 
+  -webkit-user-drag: none;     
 }
 
-.kanban-card.dragging {
+.kanban-card.dragging, .kanban-card.dragging * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
   opacity: 0.8;
   transform: scale(1.02);
 }
+
 
 @media (pointer: coarse) and (min-width: 700px){
   .kanban{
@@ -648,3 +653,5 @@ textarea:disabled {
   -webkit-text-fill-color: #444 !important;
   opacity: 1 !important; 
 }
+
+
