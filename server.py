@@ -16,9 +16,9 @@ def get_vendas():
 
     limpar_nova_venda()
     inicializacao_kanban()
-    atualizar_carne()
 
     results = atualizar_vendas()
+    atualizar_carne(results)
 
     return jsonify(results)
 
@@ -128,5 +128,5 @@ def criar_contrato_especial():
         return jsonify({"message": "Contrato especial criado com sucesso"}), 201
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5010)
+    app.run(debug=False, host='0.0.0.0', port=5010)
 

@@ -161,8 +161,6 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
     </div>
 
 
-
-
     <dialog id="filtro-modal" class="filtro-modal">
         <button class="close-modal" data-modal="filtro-modal" type="button">
                     <i class="fa-solid fa-circle-xmark"></i>
@@ -241,6 +239,8 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
             </div>
         </form>
     </dialog>
+
+    <dialog id="modal-unico"></dialog>
 
     <script>
         window.KANBAN_TOKEN = "<?= htmlspecialchars($tokenKanban, ENT_QUOTES, 'UTF-8') ?>";

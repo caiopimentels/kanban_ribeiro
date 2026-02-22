@@ -16,49 +16,38 @@ def etapas():
     "consulta-spc": ("USER_CONSULTA_SPC", "DATA_CONSULTA_SPC"),
 }
 
-def atualizar_carne():
-    boleto = atualizar_vendas()
-    clientes = [(row['cliente'].split()[0], row['id_lote']) for row in boleto]
-
-    if not clientes:
+def atualizar_carne(boleto):
+    if not boleto:
         return 0
-    
+
+    clientes = [(int(row['cliente'].split()[0]), row['id_lote']) for row in boleto]
+
     placeholders = ','.join(["(%s, %s)"] * len(clientes))
-    params = [x for par in clientes for x in par]
 
-    query_parcelas = f'''
-        SELECT 
-            cc.numped,
-            cc.codcli
-        FROM contasareceber cc
-        JOIN cadcli c ON cc.codcli = c.codcli
-        JOIN lot_controle_contrato lcc ON lcc.id_lote = cc.numped AND lcc.codcli = cc.codcli
-        WHERE (cc.codcli, cc.numped) IN ({placeholders})
-            AND cc.parcela BETWEEN 1 AND 12
-            AND cc.boleto_nosso_numero IS NOT NULL
-            AND lcc.tipo_especial = 'V'
-            AND lcc.user_etq_entrada_paga IS NULL
-            AND lcc.dt_etq_entrada_paga IS NULL
-        GROUP BY cc.numped, cc.codcli, c.razao
-        '''
+    query = f'''
+    UPDATE lot_controle_contrato lcc
+    JOIN contasareceber cc
+        ON cc.codcli = lcc.codcli
+        AND cc.numped = lcc.id_lote
+    SET
+        lcc.USER_ETQ_ENTRADA_PAGA = %s,
+        lcc.DT_ETQ_ENTRADA_PAGA   = NOW()
+    WHERE (lcc.codcli, lcc.id_lote) IN ({placeholders})
+        AND cc.parcela BETWEEN 1 AND 12
+        AND cc.boleto_nosso_numero IS NOT NULL
+        AND lcc.tipo_especial = 'V'
+        AND lcc.USER_ETQ_ENTRADA_PAGA IS NULL
+        AND lcc.DT_ETQ_ENTRADA_PAGA IS NULL
+    '''
 
-    resultado = executar_query(query_parcelas, params)
+    params = [40]
 
-    boleto = [(row['numped'], row['codcli']) for row in resultado]
-    print(boleto)
-    if boleto:
-        query = f'''
-            UPDATE lot_controle_contrato
-            SET user_etq_entrada_paga = %s,
-                dt_etq_entrada_paga = NOW()
-            WHERE id_lote = %s
-            AND codcli  = %s
-            AND user_etq_entrada_paga IS NULL
-            AND dt_etq_entrada_paga IS NULL
-        '''
+    for codcli, id_lote in clientes:
+        params.extend([codcli, id_lote])
 
-        dados = [(40, id_lote, codcli) for (id_lote, codcli) in boleto]
-        resultado = executar_query(query, dados)
+    resultado = executar_query(query, params)
+
+    return 1
 
 def inicializacao_kanban():
     atualizar = '''

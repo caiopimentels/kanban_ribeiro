@@ -7,7 +7,7 @@ const API_BASE = location.hostname.startsWith('192.168.') || location.hostname =
   ? 'http://192.168.1.5:5010' 
   : 'http://madribeiro.ddns.net:5010';
 */
-const API_BASE = 'http://192.168.2.63:5010';
+const API_BASE = 'http://192.168.1.10:5010';
 const USUARIO_ID = document.getElementById('txtLogin').value;
 
 const colunas = [
@@ -682,20 +682,24 @@ function puxarvendas() {
         card.innerHTML = window.templateCardVenda(venda, descricao);
         
         const spcVal = (venda.badges?.['consulta-spc'] ?? '').toString().trim();
-        if (!spcVal) card.classList.add('spc-pendente');
+        if (!spcVal && venda.tipo_contrato !== 'D') {
+          card.classList.add('spc-pendente');
+        } else {
+          card.classList.remove('spc-pendente');
+        }
 
 
         const badge_status = document.createElement('div');
 
         badge_status.innerHTML = `
           <div class="modal-status">
-            <div class="badge Autenticado"><span>Autenticado</span></div>
-            <div class="badge Pagamento-OK"><span>Pagamento OK</span></div>
-            <div class="badge Carne-Gerado"><span>Carnê Gerado</span></div>
+          <div class="badge contrato-digital"><span>Digital</span></div>
+          <div class="badge contrato-fisico"><span>Fisico</span></div>
+          <div class="badge Carne-Gerado"><span>Carnê Gerado</span></div>
+          <div class="badge Pagamento-OK"><span>Pagamento OK</span></div>
+          <div class="badge Autenticado"><span>Autenticado</span></div>
+          <div class="badge Impresso"><span>Impresso</span></div>
             <div class="badge Arquivado"><span>Arquivado</span></div>
-            <div class="badge contrato-fisico"><span>Fisico</span></div>
-            <div class="badge contrato-digital"><span>Digital</span></div>
-            <div class="badge Impresso"><span>Impresso</span></div>
             <div class="badge consulta-spc"><span>Consulta SPC</span></div>
           </div>`;
 
@@ -712,8 +716,9 @@ function puxarvendas() {
 
 
         if (venda.tipo_contrato === 'D') {
-          const carneBtn = modal.querySelector('.modal-status .badge.Carne-Gerado');
-          if (carneBtn) carneBtn.remove();
+          modal.querySelectorAll('.modal-status .badge.Carne-Gerado, .badge.consulta-spc, .badge.Pagamento-OK')
+          .forEach(b => b.remove());
+          
         }
 
         adicionarListenerObservacao(modal);
@@ -961,12 +966,14 @@ function renderizarEntreguesFinalizados(listaVendasFinalizadas) {
     if (!card) {
 
       card = criarCardBasico(venda);
-    } else {
+    } 
+    else {
       card.setAttribute('data-modal', `modal-${venda.id}`);
       if (venda.data_compra) card.dataset.dataVenda = venda.data_compra;
     }
 
     container.appendChild(card);
+    card.dataset.finalizado = '1';
     carregarbadges(venda)
     const thisBtn = card.querySelector(`.badge-cards .badge.consulta-spc`);
     if (thisBtn) thisBtn.remove();
@@ -1060,6 +1067,14 @@ adicionarListenersModalEspecial();
 function adicionarListenerObservacao(modal) {
     const campo = modal.querySelector('.observacao-input');
     if (!campo) return;
+
+    const isFinalizado = modal.dataset.finalizado === '1' || modal.closest?.('[data-finalizado="1"]');
+    if (isFinalizado) {
+      campo.disabled = true;                 // ou campo.readOnly = true;
+      campo.classList.add('obs-bloqueada');  // opcional: estilo
+      return; // não adiciona listeners de salvar
+    }
+
 
     const id_lote = modal.id.replace('modal-', '');
 
