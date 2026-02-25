@@ -1,11 +1,9 @@
 <?php
 session_start();
-//$id_rotina = "55";
-//require "securety.php";
-//$userId      = $_SESSION['login'];
-//$userName    = $_SESSION['nome'];
-$userId      = 40;
-$userName    = 'Caio Gatao';
+$id_rotina = "55";
+require "securety.php";
+$userId      = $_SESSION['login'];
+$userName    = $_SESSION['nome'];
 
 function loadEnv($path)
 {

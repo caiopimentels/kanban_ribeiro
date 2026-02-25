@@ -3,7 +3,7 @@
  * Mantém valores centralizados e fáceis de trocar.
  */
 
-const hostname = location.hostname;
+const { protocol, hostname } = window.location;
 
 let API_BASE;
 
@@ -12,7 +12,7 @@ if (
   hostname.startsWith('10.') ||
   hostname === 'localhost'
 ) {
-  API_BASE = `http://192.168.1.24:5010`;
+  API_BASE = `${protocol}//${hostname}:5010`;
 } else {
   API_BASE = 'http://madribeiro.ddns.net:5010';
 }
