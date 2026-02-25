@@ -1,0 +1,52 @@
+{
+  "evento": "createlist",
+  "timestamp": "2026-02-25T00:46:32.054417",
+  "endpoint": "https://secure.d4sign.com.br/api/v1/documents/4a694e20-b58f-4276-9b30-a8fae3b01cdd/createlist",
+  "status": 200,
+  "data": {
+    "message": [
+      {
+        "key_signer": "MTk0MDQ2NTU4",
+        "email": "madeiras.rhelley@hotmail.com",
+        "act": "1",
+        "foreign": "0",
+        "certificadoicpbr": 0,
+        "assinatura_presencial": 0,
+        "doc_auth": "0",
+        "embed_methodauth": "email",
+        "embed_smsnumber": "+",
+        "upload_allow": 0,
+        "upload_obs": null,
+        "docauthandselfie": 0,
+        "skipemail": 0,
+        "whatsapp": 0,
+        "password_code": "",
+        "auth_pix": 0,
+        "videoselfie": null,
+        "status": "created",
+        "success": "1"
+      },
+      {
+        "key_signer": "MTk0MDQ2NTU5",
+        "email": "edygbi36@gmail.com",
+        "act": "1",
+        "foreign": "0",
+        "certificadoicpbr": 0,
+        "assinatura_presencial": 0,
+        "doc_auth": 1,
+        "embed_methodauth": "email",
+        "embed_smsnumber": "+",
+        "upload_allow": 0,
+        "upload_obs": null,
+        "docauthandselfie": "1",
+        "skipemail": 0,
+        "whatsapp": 0,
+        "password_code": "",
+        "auth_pix": 0,
+        "videoselfie": null,
+        "status": "created",
+        "success": "1"
+      }
+    ]
+  }
+}

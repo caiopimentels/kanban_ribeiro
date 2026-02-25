@@ -6,7 +6,7 @@
  */
 
 import { formatarData, formatarHorario, normalizarClasseBadge } from './utils.js';
-import { registrarEtiqueta, salvarObservacao } from './api.js';
+import { registrarEtiqueta, salvarObservacao, enviarContratoD4SignStream} from './api.js';
 import { ESTADO } from './estado.js';
 import { atualizarContagem, aplicarBadgesNoCard } from './board.js';
 
@@ -35,8 +35,8 @@ function removerBadgesJaAplicadas(modal, venda) {
     if (btn) btn.remove();
   });
 
-  // regra: se já tem físico ou digital, remove os dois botões
-  if (existentes.has('contrato-fisico') || existentes.has('contrato-digital')) {
+  // regra: se já tem físico ou digital (inclui manual), remove os dois botões
+  if (existentes.has('contrato-fisico') || existentes.has('contrato-digital') || existentes.has('contrato-digital-manual')) {
     modal.querySelectorAll('.modal-status .badge.contrato-fisico, .modal-status .badge.contrato-digital')
       .forEach(b => b.remove());
   }
@@ -111,26 +111,12 @@ function configurarClickBadges(modal, venda) {
     venda.badges = venda.badges || {};
 
     // ============================
-    // 1️⃣ DIGITAL → aplica AUTENTICADO
+    // 1️⃣ DIGITAL → abre modal de envio D4Sign
+    // - Só aplica a etiqueta se o D4Sign confirmar recebimento
+    // - Permite "Digital (manual)" se o envio falhar / já foi enviado fora
     // ============================
     if (etapa === 'contrato-digital') {
-      await aplicarBadgeNormal({ modal, venda, card, etapa: 'contrato-digital', btn });
-
-      const btnAut = modal.querySelector('.modal-status .badge.Autenticado');
-      if (btnAut) {
-        await aplicarBadgeNormal({
-          modal,
-          venda,
-          card,
-          etapa: 'Autenticado',
-          btn: btnAut
-        });
-      }
-
-      // remove fisico também
-      modal.querySelectorAll('.modal-status .badge.contrato-fisico')
-        .forEach(b => b.remove());
-
+      abrirModalD4Sign({ venda, modalVenda: modal, cardVenda: card, btnDigital: btn });
       return;
     }
 
@@ -256,4 +242,201 @@ async function aplicarBadgeNormal({ modal, venda, card, etapa, btn }) {
     // (como esta função está no mesmo arquivo, ela enxerga abrirModalVenda)
     abrirModalVenda(venda, { finalizado: card.dataset.finalizado === '1' });
   }
+}
+
+// modal_unico.js (arquivo inteiro)
+
+// ===================================================
+// D4SIGN MODAL - bind único + sem refresh
+// ===================================================
+
+let vendaAtualContexto = null;
+
+export function abrirModalD4Sign(contexto) {
+  console.log("[D4SIGN] CONTEXTO:", contexto);
+  const venda = contexto?.venda || contexto;
+
+  if (!venda) {
+    console.error("[D4SIGN] sem venda no contexto:", contexto);
+    alert("Não encontrei os dados da venda para envio.");
+    return;
+  }
+
+  // ✅ campos reais do seu objeto
+  const id_lote = venda.id_lote;               // ex: 953
+  const lote = venda.lote || "";               // ex: QE-03
+  const clienteRaw = venda.cliente || "";      // ex: "1220 - EDILSON ..."
+  const vendedorRaw = venda.vendedor || "";    // ex: "52 - ALINE ..."
+  const id_venda = venda.id || "";    // ex: "52 - ALINE ..."
+
+  // nome do cliente (sem "1220 - ")
+  const cliente_nome =
+    clienteRaw.replace(/^\s*\d+\s*-\s*/i, "").trim() || clienteRaw.trim();
+
+  // codvendedor (pega o número antes do hífen)
+  const codvendedor = (vendedorRaw.match(/^\s*(\d+)\s*-/)?.[1] || "").trim();
+
+  // ✅ contexto global usado pela etiqueta
+  vendaAtualContexto = { id_lote, lote, cliente_nome, codvendedor, venda, id_venda };
+
+  const dlg = document.getElementById("d4sign-modal");
+  if (!dlg) return;
+
+  const form = dlg.querySelector("#d4sign-form");
+  const btnManual = dlg.querySelector("#d4_manual_btn");
+  const btnEnviar = dlg.querySelector("#d4_enviar");
+  const filePdf = dlg.querySelector("#d4_pdf");
+
+  const statusEl = dlg.querySelector("#d4_status");
+  const barEl = dlg.querySelector("#d4_bar");
+
+  if (!form) return;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function setProgress(pct, msg) {
+    if (barEl) barEl.style.width = `${pct}%`;
+    if (statusEl) statusEl.textContent = msg || "";
+  }
+
+  function setLoading(loading) {
+    if (btnEnviar) btnEnviar.disabled = loading;
+    if (btnManual) btnManual.disabled = loading;
+    dlg.dataset.locked = loading ? "1" : "0";
+  }
+
+  // ✅ impedir ESC enquanto envia (bind único)
+  if (!dlg.dataset.cancelBound) {
+    dlg.addEventListener("cancel", (e) => {
+      if (dlg.dataset.locked === "1") e.preventDefault();
+    });
+    dlg.dataset.cancelBound = "1";
+  }
+
+  // ✅ evitar bind duplicado de submit
+  if (form.dataset.bound === "1") {
+    setProgress(0, "Aguardando envio...");
+    dlg.showModal();
+    return;
+  }
+  form.dataset.bound = "1";
+
+  window.closeD4Modal = () => {
+    if (dlg.dataset.locked === "1") return;
+    dlg.close();
+  };
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    try {
+      if (!id_lote) {
+        console.error("[D4SIGN] venda sem id_lote:", venda);
+        alert("Esta venda não tem id_lote. Verifique o mapeamento do backend.");
+        return;
+      }
+
+      if (!filePdf?.files?.[0]) {
+        alert("Selecione o PDF do contrato.");
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append("pdf", filePdf.files[0]);
+
+      // ✅ dados certos para o backend montar o nome do arquivo
+      fd.append("id_lote", String(id_lote));
+      fd.append("codvendedor", codvendedor || "");
+      fd.append("cliente_nome", cliente_nome || "");
+      fd.append("lote", lote || "");
+
+      // campos do formulário
+      const vendedorEmail = dlg.querySelector("#d4_email_vendedor")?.value || "";
+      const compradoresEmails = dlg.querySelector("#d4_emails_compradores")?.value || "";
+      const cofre = dlg.querySelector("#d4_cofre")?.value || "";
+
+      fd.append("vendedor_email", vendedorEmail.trim());
+      fd.append("compradores_emails", compradoresEmails.trim());
+      fd.append("cofre_key", cofre.trim());
+
+      setLoading(true);
+      setProgress(2, "Iniciando envio...");
+
+      // ✅ usa API padrão com stream
+      const final = await enviarContratoD4SignStream(fd, (pct, msg) => {
+        setProgress(pct, msg);
+      });
+
+      if (!final?.ok) throw new Error(final?.error || "Falha no envio.");
+
+      setProgress(98, "Registrando etiqueta no Kanban...");
+      await aplicarEtiquetaDigital({ manual: false });
+
+      setProgress(100, "✅ Sucesso! Atualizando...");
+      await sleep(2500);
+      location.reload();
+    } catch (e) {
+      console.error("[D4SIGN] erro:", e);
+      alert(e?.message || "Erro ao enviar para o D4Sign.");
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  // ✅ bind único do manual (senão duplica ao abrir o modal várias vezes)
+  if (btnManual && !btnManual.dataset.bound) {
+    btnManual.addEventListener("click", async (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (dlg.dataset.locked === "1") return;
+
+      try {
+        if (!id_lote) {
+          alert("Esta venda não tem id_lote. Não consigo marcar etiqueta.");
+          return;
+        }
+
+        setLoading(true);
+        setProgress(95, "Registrando etiqueta (manual)...");
+        await aplicarEtiquetaDigital({ manual: true });
+
+        setProgress(100, "✅ Marcado! Atualizando...");
+        await sleep(2500);
+        location.reload();
+      } catch (e) {
+        console.error("[D4SIGN] manual erro:", e);
+        alert(e?.message || "Erro ao marcar manual.");
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    btnManual.dataset.bound = "1";
+  }
+
+  setProgress(0, "Aguardando envio...");
+  dlg.showModal();
+}
+
+async function aplicarEtiquetaDigital({ manual = false } = {}) {
+  const etiqueta = "contrato-digital";
+  const usuario = document.getElementById("txtLogin")?.value || "";
+
+  const id_venda = vendaAtualContexto?.id_venda; // ✅ usar pra /atualizar
+
+  if (!id_venda) throw new Error("id_venda não encontrado para registrar etiqueta.");
+  if (!usuario) throw new Error("usuário não encontrado (txtLogin).");
+
+  const resp = await registrarEtiqueta({
+    etiqueta,
+    usuario,
+    id_lote: id_venda, // ✅ backend espera isso (apesar do nome ser id_lote)
+  });
+
+  if (resp && resp.ok === false) {
+    throw new Error(resp.error || "Falha ao registrar etiqueta.");
+  }
+
+  return true;
 }

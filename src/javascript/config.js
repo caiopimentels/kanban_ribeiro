@@ -12,7 +12,7 @@ if (
   hostname.startsWith('10.') ||
   hostname === 'localhost'
 ) {
-  API_BASE = `http://${hostname}:5010`;
+  API_BASE = `http://192.168.1.24:5010`;
 } else {
   API_BASE = 'http://madribeiro.ddns.net:5010';
 }

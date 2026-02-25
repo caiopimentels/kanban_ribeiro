@@ -1,0 +1,16 @@
+{
+  "evento": "upload",
+  "timestamp": "2026-02-25T00:21:49.602202",
+  "endpoint": "https://secure.d4sign.com.br/api/v1/documents/598e7271-76f9-40a7-aa40-6c81d813ece7/upload/",
+  "pdf": "52 - EDILSON_AMORIM_ALCANTARA QE-03.pdf",
+  "safe_uuid": "598e7271-76f9-40a7-aa40-6c81d813ece7",
+  "result": {
+    "ok": true,
+    "status_code": 200,
+    "data": {
+      "message": "success",
+      "uuid": "dfd534d2-0679-4e64-8dce-ab6aae757824"
+    },
+    "text": null
+  }
+}

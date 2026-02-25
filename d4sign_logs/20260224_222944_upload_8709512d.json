@@ -1,0 +1,16 @@
+{
+  "evento": "upload",
+  "timestamp": "2026-02-24T22:29:44.430494",
+  "endpoint": "https://secure.d4sign.com.br/api/v1/documents/8f7f8354-9d83-49e2-b657-5f8131c66b69/upload/",
+  "pdf": "SEM_NOME_SEM_NOME_SEM_NOME.pdf",
+  "safe_uuid": "8f7f8354-9d83-49e2-b657-5f8131c66b69",
+  "result": {
+    "ok": true,
+    "status_code": 200,
+    "data": {
+      "message": "success",
+      "uuid": "847f94de-aae4-4eb0-a8e0-c0277bd8bcc1"
+    },
+    "text": null
+  }
+}

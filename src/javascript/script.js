@@ -7,7 +7,7 @@ const API_BASE = location.hostname.startsWith('192.168.') || location.hostname =
   ? 'http://192.168.1.5:5010' 
   : 'http://madribeiro.ddns.net:5010';
 */
-const API_BASE = 'http://192.168.1.10:5010';
+const API_BASE = 'http://192.168.1.24:5010';
 const USUARIO_ID = document.getElementById('txtLogin').value;
 
 const colunas = [

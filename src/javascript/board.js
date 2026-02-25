@@ -95,6 +95,7 @@ export function aplicarBadgesNoCard(card, venda) {
 
     if (etapa === 'contrato-fisico') badge.textContent = 'Fisico';
     else if (etapa === 'contrato-digital') badge.textContent = 'Digital';
+    else if (etapa === 'contrato-digital-manual') badge.textContent = 'Digital (manual)';
     else badge.textContent = etapa.replace(/-/g, ' ');
 
     badgeContainer.appendChild(badge);

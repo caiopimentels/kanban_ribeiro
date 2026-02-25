@@ -6,7 +6,7 @@ window.templateModalVenda = function (venda, formatarData, formatarhorario) {
             </button>
             <div class="modal-header">
               <h1 class="modal-title">
-                ${venda.cliente} (${venda.lote})
+                ${venda.codcli} - ${venda.cliente} (${venda.lote})
               </h1>
             </div>
             <div class="modal-body">

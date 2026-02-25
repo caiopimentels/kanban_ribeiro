@@ -1,0 +1,10 @@
+{
+  "evento": "addpins",
+  "timestamp": "2026-02-24T23:30:24.267721",
+  "endpoint": "https://secure.d4sign.com.br/api/v1/documents/b18fb7ff-14e8-4736-8fec-3fe10222a3ee/addpins",
+  "status": 200,
+  "data": {
+    "message": "success"
+  },
+  "pins_count": 42
+}

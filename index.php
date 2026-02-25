@@ -38,6 +38,10 @@ function loadEnv($path)
 
 loadEnv(__DIR__ . '/.env');
 
+$cofresJson = getenv('COFRES_JSON') ?: '{}';
+$cofres = json_decode($cofresJson, true);
+if (!is_array($cofres)) $cofres = [];
+
 $secret = getenv('SECRET_PATH');
 
 function base64url_encode($data) {
@@ -241,6 +245,56 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
     </dialog>
 
     <dialog id="modal-unico"></dialog>
+
+    <dialog id="d4sign-modal">
+        <div class="d4-wrap">
+            <div class="d4-head">
+            <h3 class="d4-title">Enviar contrato para assinatura (D4Sign)</h3>
+            <button type="button" class="d4-close" onclick="window.closeD4Modal?.()">✕</button>
+            </div>
+
+            <form id="d4sign-form" class="d4sign-form">
+            <div class="d4-grid">
+                <label>PDF do contrato</label>
+                <input type="file" id="d4_pdf" accept="application/pdf" required>
+
+                <label>E-mail do vendedor</label>
+                <input type="email" id="d4_email_vendedor" 
+                        placeholder="ex: vendedor@empresa.com" 
+                        value="madeiras.rhelley@hotmail.com" disabled>
+
+                <label>E-mails dos compradores</label>
+                <input type="text" id="d4_emails_compradores" placeholder="comprador1@email.com;comprador2@email.com">
+
+                <label>Cofre</label>
+                <select id="d4_cofre">
+                <?php if (empty($cofres)): ?>
+                    <option value="">Nenhum cofre no .env</option>
+                <?php else: ?>
+                    <?php foreach ($cofres as $key => $info): 
+                    $label = $info['label'] ?? $key; ?>
+                    <option value="<?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+                    </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </select>
+            </div>
+
+            <div class="d4-actions">
+                <button type="button" class="btn" id="d4_manual_btn">Marcar Digital (manual)</button>
+                <button type="submit" class="btn btn-primary" id="d4_enviar">Enviar</button>
+            </div>
+
+            <div class="d4-progress">
+                <div class="d4-progress-track">
+                    <div id="d4_bar" class="d4-progress-bar" style="width:0%"></div>
+                </div>
+                <small id="d4_status">Aguardando envio...</small>
+            </div>
+            </form>
+        </div>
+    </dialog>
 
     <script>
         window.KANBAN_TOKEN = "<?= htmlspecialchars($tokenKanban, ENT_QUOTES, 'UTF-8') ?>";

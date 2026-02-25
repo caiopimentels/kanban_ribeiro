@@ -20,7 +20,7 @@ def atualizar_carne(boleto):
     if not boleto:
         return 0
 
-    clientes = [(int(row['cliente'].split()[0]), row['id_lote']) for row in boleto]
+    clientes = [(int(row['codcli']), row['id_lote']) for row in boleto]
 
     placeholders = ','.join(["(%s, %s)"] * len(clientes))
 
@@ -298,12 +298,14 @@ def contratos(consulta):
            'id': i['ID'],
            'id_lote': i['ID_LOTE'],
            'lote': None,
-           'cliente': i['cliente'].rstrip(),
+           'codcli': i['codcli'],
+           'cliente': i['razao'],
            'cliente_abreviado': f"{i['codcli']} - {nome_abreviado(i['razao'], 20, i['parte'])}",
            'tipo_contrato': i['TIPO_ESPECIAL'],
            'entrada': 0.00,
            'fantasia': i['fantasia'],
            'dt_compra': i['data_compra'],
+           'codvendedor': i['codvendedor'],
            'cadastro': {
                'user': f"{i['rca']} - {i['nome_usuario']}",
                'data': i['dtcadastro']
