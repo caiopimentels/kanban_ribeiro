@@ -420,23 +420,35 @@ export function abrirModalD4Sign(contexto) {
 }
 
 async function aplicarEtiquetaDigital({ manual = false } = {}) {
-  const etiqueta = "contrato-digital";
   const usuario = document.getElementById("txtLogin")?.value || "";
-
-  const id_venda = vendaAtualContexto?.id_venda; // ✅ usar pra /atualizar
+  const id_venda = vendaAtualContexto?.id_venda; // backend espera como "id_lote"
 
   if (!id_venda) throw new Error("id_venda não encontrado para registrar etiqueta.");
   if (!usuario) throw new Error("usuário não encontrado (txtLogin).");
 
-  const resp = await registrarEtiqueta({
-    etiqueta,
+  // 1) sempre registra contrato-digital (mesmo no manual)
+  await registrarEtiqueta({
+    etiqueta: "contrato-digital",
     usuario,
-    id_lote: id_venda, // ✅ backend espera isso (apesar do nome ser id_lote)
+    id_lote: id_venda,
   });
 
-  if (resp && resp.ok === false) {
-    throw new Error(resp.error || "Falha ao registrar etiqueta.");
-  }
+  // 2) regra nova: ao marcar Digital, marca Autenticado também
+  await registrarEtiqueta({
+    etiqueta: "Autenticado",
+    usuario,
+    id_lote: id_venda,
+  });
+
+  // Atualiza memória local (pra UI não “desgrudar” antes do reload)
+  try {
+    const venda = vendaAtualContexto?.venda;
+    if (venda) {
+      venda.badges = venda.badges || {};
+      venda.badges["contrato-digital"] = 1;
+      venda.badges["Autenticado"] = 1;
+    }
+  } catch {}
 
   return true;
 }

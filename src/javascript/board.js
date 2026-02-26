@@ -27,6 +27,35 @@ function descricaoContrato(venda) {
   return `VENDA - ${empreendimento}`;
 }
 
+function aplicarEntradaConfirmada(card, venda) {
+  // só vale para venda normal (não Transferência / Distrato)
+  const tipo = (venda.tipo_contrato || '').trim().toUpperCase();
+  if (tipo === 'T' || tipo === 'D') return;
+
+  // se já tem Pagamento OK, não mostra Entrada Confirmada
+  const hasPagamentoOK = !!(venda.badges && (venda.badges['Pagamento OK'] || venda.badges['Pagamento-OK']));
+  if (hasPagamentoOK) return;
+
+  let entradaBruta = (venda.entrada ?? '').toString().trim();
+  if (!entradaBruta) return;
+
+  const entradaNum = parseFloat(
+    entradaBruta.replace(/\./g, '').replace(',', '.')
+  );
+
+  if (!isNaN(entradaNum) && entradaNum > 0) {
+    const badgeContainer = card.querySelector('.badge-cards');
+    if (!badgeContainer) return;
+
+    if (!badgeContainer.querySelector('.badge.Entrada-Confirmada')) {
+      const badge = document.createElement('span');
+      badge.className = 'badge Entrada-Confirmada';
+      badge.textContent = 'Entrada Confirmada';
+      badgeContainer.appendChild(badge);
+    }
+  }
+}
+
 /**
  * Cria o elemento do card (sem modal).
  * Guarda a venda em memória dentro do card: card._venda = venda
@@ -56,6 +85,7 @@ export function criarCardVenda(venda, { finalizado = false } = {}) {
 
   // badges vindas do backend: renderiza no card (sem duplicar)
   aplicarBadgesNoCard(card, venda);
+  aplicarEntradaConfirmada(card, venda);
 
   // seu comportamento: tirar o chip visual “consulta-spc” do card
   // (mantemos a mesma usabilidade que você já tinha)
@@ -163,3 +193,4 @@ export function renderizarBloqueados(vendas) {
   }
   container.appendChild(frag);
 }
+

@@ -1,9 +1,13 @@
 <?php
+/*
 session_start();
 $id_rotina = "55";
 require "securety.php";
 $userId      = $_SESSION['login'];
 $userName    = $_SESSION['nome'];
+*/
+$userId      = 40;
+$userName    = 'Caio Pimentel';
 
 function loadEnv($path)
 {
@@ -94,7 +98,7 @@ $tokenKanban = gerarTokenKanban($userId, $secret);
         <!--Coluna 1-->
         <div class="kanban-column" id="contrato-gerado">
             <div class="kanban-title">
-                <h2>Contrato Gerado </h2>
+                <h2 title="Vendas executadas dentro do sistema">Contrato Gerado </h2>
 
                 <button class="add-card">
                     <i class="fa-solid fa-filter"></i>
