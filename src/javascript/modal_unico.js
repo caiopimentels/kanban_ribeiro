@@ -46,8 +46,13 @@ function configurarObservacao(modal, venda) {
   const campo = modal.querySelector('.observacao-input');
   if (!campo) return;
 
-  const algumFinalizado = !!document.querySelector(`.kanban-card[id_lote="${venda.id}"][data-finalizado="1"]`);
-  const finalizado = modal.dataset.finalizado === '1' || algumFinalizado;
+  const algumFinalizado = !!document.querySelector(
+    `.kanban-card[id_lote="${venda.id}"][data-finalizado="1"]`
+  );
+
+  const finalizado =
+    modal.dataset.finalizado === '1' || algumFinalizado;
+
   if (finalizado) {
     campo.disabled = true;
     campo.classList.add('obs-bloqueada');
@@ -57,40 +62,42 @@ function configurarObservacao(modal, venda) {
   campo.disabled = false;
   campo.classList.remove('obs-bloqueada');
 
-  let t = null;
+  const valorOriginal = campo.value;
 
   const salvar = async () => {
     const texto = campo.value.trim();
 
+    if (texto === valorOriginal.trim()) return;
+
     try {
-      const resp = await salvarObservacao({
+      await salvarObservacao({
         id_lote: venda.id,
         usuario: ESTADO.usuarioId,
         observacao: texto
       });
 
-      location.reload()
+      const cards = document.querySelectorAll(
+        `.kanban-card[id_lote="${venda.id}"]`
+      );
 
-      // ✅ atualiza TODOS os cards desse id_lote (pode haver duplicado)
-      const cards = document.querySelectorAll(`.kanban-card[id_lote="${venda.id}"]`);
       cards.forEach(c => {
-        c.dataset.obs = valorSalvo;
-        if (c._venda) c._venda.OBS = valorSalvo;
+        c.dataset.obs = texto;
+        if (c._venda) c._venda.OBS = texto;
       });
-
-      // ✅ garante que o campo está com o valor salvo
-      campo.value = valorSalvo;
 
     } catch (err) {
       console.error('Erro ao salvar observação:', err);
     }
   };
 
-  campo.onblur = salvar;
-  campo.oninput = () => {
-    clearTimeout(t);
-    t = setTimeout(salvar, 600);
-  };
+  campo.addEventListener('blur', salvar);
+
+  campo.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      campo.value = valorOriginal;
+      campo.blur();
+    }
+  });
 }
 
 function configurarClickBadges(modal, venda) {

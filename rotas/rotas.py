@@ -6,7 +6,7 @@ def etapas():
     "assinado-cliente": ("USER_ENTRADA_PAGA", "DATA_ENTRADA_PAGA"),
     "aguardando-retirada": ("USER_RETIRADA", "DATA_RETIRADA"),
     "entregue": ("USER_ENTREGUE", "DATA_ENTREGUE"),
-    "Digitalizado": ("USER_ETQ_ASSINATURA_DIRETOR", "DT_ETQ_ASSINATURA_DIRETOR"),
+    "Arquivado": ("USER_ETQ_ASSINATURA_DIRETOR", "DT_ETQ_ASSINATURA_DIRETOR"),
     "Pagamento-OK": ("USER_ETQ_ENTREGUE", "DT_ETQ_ENTREGUE"),
     "Carne-Gerado": ("USER_ETQ_ENTRADA_PAGA", "DT_ETQ_ENTRADA_PAGA"),
     "Autenticado": ("USER_ETQ_RETIRADA", "DT_ETQ_RETIRADA"),
@@ -69,8 +69,8 @@ def limpar_nova_venda():
         JOIN lot_lotes ll ON ll.id = lcc.id_lote
         SET
           lcc.codcli                        = ll.codcli,
-          lcc.codvendedor                   = NULL,
-          lcc.data_compra                   = NULL,
+          lcc.codvendedor                   = ll.codvendedor,
+          lcc.data_compra                   = ll.data_compra,
           lcc.USER_ENTRADA_PAGA             = NULL,
           lcc.DATA_ENTRADA_PAGA             = NULL,
           lcc.USER_RETIRADA                 = NULL,
